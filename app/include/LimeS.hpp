@@ -43,6 +43,9 @@ public:
     explicit LimeS(QWidget *parent = 0);
     ~LimeS();
 
+public slots:
+    void on_loadImage();
+
 protected:
     // ui
     Ui::LimeS *ui;
