@@ -30,8 +30,6 @@ list( APPEND CMAKE_MODULE_PATH
     ${CMAKE_CURRENT_LIST_DIR}/cmake
     $ENV{HOME}/.local/share )
 
-# find GLEW
-find_package( GLEW REQUIRED )
 
 # find Qt
 if( WIN32 )
