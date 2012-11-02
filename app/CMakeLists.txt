@@ -1,6 +1,6 @@
 ##############################################################################
 #                                                                            #
-# This file is part of LimeS, a C++ UI for photometric stereo                #
+# This file is part of LimeS, a C++ UI image segmentation                    #
 #                                                                            #
 # Copyright (C) 2012 Alexandru Duliu                                         #
 #                                                                            #
@@ -29,7 +29,6 @@ list( APPEND CMAKE_MODULE_PATH
     ${CMAKE_INSTALL_PREFIX}/share
     ${CMAKE_CURRENT_LIST_DIR}/cmake
     $ENV{HOME}/.local/share )
-
 
 # find Qt
 if( WIN32 )
