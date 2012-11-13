@@ -39,16 +39,41 @@
 
 
 #include <lime/util.hpp>
+#include <lime/Algorithm.hpp>
+#include <CImg.h>
+#include <string>
 
+using namespace cimg_library;
 
 namespace lime
 {
 
-class Segmentation
+template<typename T = int> class Segmentation
 {
 public:
-    Segmentation();
-    virtual ~Segmentation();
+	Segmentation(Algorithm<T>* _algorithm):algorithm(_algorithm){}
+	  virtual ~Segmentation(){}
+	
+	//Inline functions
+	inline void switchAlgorithm(Algorithm<T>* _algorithm){algorithm = _algorithm;}
+	inline float getRecallTendency(){return algorithm->getDrift();}
+	inline bool hasRecallTendency(){return algorithm->hasDrift();}
+	inline void changeRecallTendency(float tendency){algorithm->changeDrift(tendency);}
+	inline void retrieveMaskOfImage(CImg<T> *img){algorithm->processImage(img);}
+	inline CImg<T>* retrieveMaskOfImage(const CImg<T> &img){return algorithm->processImage(img);}
+
+	inline CImg<T>* retrieveMaskOfImage(const std::string filename)
+	{
+
+		CImg<T> tempImg;
+
+		loadImage(filename,tempImg);
+
+		return algorithm->processImage(tempImg);
+	}
+
+protected:
+	Algorithm<T>* algorithm;
 
 
 };

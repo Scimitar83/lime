@@ -41,7 +41,6 @@
 #include <memory>
 #include <vector>
 #include <stdint.h>
-
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 

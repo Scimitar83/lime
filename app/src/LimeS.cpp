@@ -23,7 +23,6 @@
 #include <iostream>
 #include <stdexcept>
 #include <cmath>
-
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QMessageBox>
