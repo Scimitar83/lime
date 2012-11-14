@@ -78,11 +78,8 @@ namespace lime{
 template<typename T>
 CImg<double>* lime::ColorimetricYCbCrAlgorithm1<T>::transformImage(const CImg<T> &img )
 {
-	img.save("test1.bmp");
 	CImg<double> *resImg = new CImg<double>();
 	*resImg = img.get_RGBtoYCbCr();
-
-	resImg->save("test2.bmp");
 
 	return resImg;
 }
