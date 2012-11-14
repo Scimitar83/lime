@@ -27,14 +27,15 @@
 /// \class   Segmentation
 ///
 /// \package lime
-/// \version 0.1.0
+/// \version 0.2.0
 ///
 /// \brief   base class for image segmentation
 ///
 /// \details this is the base class of segmentations using the lime library
 ///
-/// \author  Alexandru Duliu
-/// \date    Oct 29, 2012
+/// \author  Alexandru Duliu, Alexander Schoch
+/// \date    Oct 29, 2012 - first creation
+/// \data    Nov 13, 2012 - basic structure
 ///
 
 
@@ -55,13 +56,40 @@ public:
 	  virtual ~Segmentation(){}
 	
 	//Inline functions
+
+	/**
+	* @brief Can be used to switch the algorithm at runtime (Strategy Pattern)
+	*/
 	inline void switchAlgorithm(Algorithm<T>* _algorithm){algorithm = _algorithm;}
+
+	/**
+	* @brief Returns the current recall tendency (how much the Segmentation is aimed at recall vs. precision (might have no effect, see hasRecallTendency)
+	*/
 	inline float getRecallTendency(){return algorithm->getDrift();}
+
+	/** 
+	* @brief Returns true if the Segmentation currently supports the recall tendency mechanism (dependent on the used Algorithm)
+	*/
 	inline bool hasRecallTendency(){return algorithm->hasDrift();}
+
+	/** 
+	* @brief Used to change the recall tendency of the Segmentation (might have no effect, see hasRecallTendency)
+	*/
 	inline void changeRecallTendency(float tendency){algorithm->changeDrift(tendency);}
+
+	/** 
+	* @brief Delivers a binary mask (1 == skin pixel, 0 == no-skin pixel) with the width and height of the original image
+	*/
 	inline void retrieveMaskOfImage(CImg<T> *img){algorithm->processImage(img);}
+
+	/** 
+	* @brief Delivers a binary mask (1 == skin pixel, 0 == no-skin pixel) with the width and height of the original image
+	*/
 	inline CImg<T>* retrieveMaskOfImage(const CImg<T> &img){return algorithm->processImage(img);}
 
+	/** 
+	* @brief Delivers a binary mask (1 == skin pixel, 0 == no-skin pixel) with the width and height of the original image
+	*/
 	inline CImg<T>* retrieveMaskOfImage(const std::string filename)
 	{
 
@@ -73,6 +101,9 @@ public:
 	}
 
 protected:
+	/** 
+	* @brief The internal algorithm that is used to process an image and generate a bit mask
+	*/
 	Algorithm<T>* algorithm;
 
 

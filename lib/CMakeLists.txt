@@ -36,9 +36,10 @@ list( APPEND Lime_INC
     include/lime/Segmentation.hpp
     include/lime/util.hpp
 	include/lime/Algorithm.hpp
-	include/lime/ColorimetricHSIAlgorithm1.hpp)
+	include/lime/ColorimetricHSIAlgorithm1.hpp
+	include/lime/ColorimetricYCbCrAlgorithm1.hpp)
 list( APPEND Lime_SRC
-)
+	src/lime/util.cpp)
 
 # external dependencies of lime
 list( APPEND Lime_EXTERN_INC extern/cimg/CImg.h )

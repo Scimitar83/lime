@@ -22,18 +22,18 @@
 #pragma once
 
 ///
-/// \file    ColorimetricHSIAlgorithm1.hpp
-/// \class   ColorimetricHSIAlgorithm1
+/// \file    ColorimetricYCbCrAlgorithm1.hpp
+/// \class   ColorimetricYCbCrAlgorithm1
 ///
 /// \package lime
 /// \version 0.2.0
 ///
 /// \brief Subclass of Algorithm
 ///
-/// \detail Subclass of Algorithm which uses a transformation to and fixed thresholds of the HSI color space for colorimetric skin segmentation 
+/// \detail Subclass of Algorithm which uses a transformation to and fixed thresholds of the YCbCr color space for colorimetric skin segmentation 
 ///
 /// \author  Aleander Schoch
-/// \date    Nov 13, 2012 - first creation and implementation
+/// \date    Nov 14, 2012 - first creation and implementation
 ///
 
 #include <lime/Algorithm.hpp>
@@ -43,25 +43,19 @@
 #endif
 
 // Thresholds
-static const double threshold_H_lower1 = 1.0;
-static const double threshold_H_higher1 = 28.0;
-static const double threshold_H_lower2 = 332.0;
-static const double threshold_H_higher2 = 360.0;
-static const double threshold_H_lower3 = 309.0;
-static const double threshold_H_higher3 = 331.0;
-static const double threshold_I = 0.4;
-static const double threshold_S_lower = 13.0/255.0;
-static const double threshold_S_higher1 = 110.0/255.0;
-static const double threshold_S_higher2 = 75.0/255.0;
+static const double threshold_Cb_lower = 77.0;
+static const double threshold_Cb_higher = 127.0;
+static const double threshold_Cr_lower = 133.0;
+static const double threshold_Cr_higher = 173.0;
 
 namespace lime{
 
-	template<typename T> class ColorimetricHSIAlgorithm1: public Algorithm<T>{
+	template<typename T> class ColorimetricYCbCrAlgorithm1: public Algorithm<T>{
 
 	public:
 
-		ColorimetricHSIAlgorithm1(float _driftValue = -1.0, bool _applyMedian = false):Algorithm<T>(_driftValue,_applyMedian,false){}
-		virtual ~ColorimetricHSIAlgorithm1(){}
+		ColorimetricYCbCrAlgorithm1(float _driftValue = -1.0, bool _applyMedian = false):Algorithm<T>(_driftValue,_applyMedian,false){}
+		virtual ~ColorimetricYCbCrAlgorithm1(){}
 
 	protected:
 
@@ -82,30 +76,23 @@ namespace lime{
 }
 
 template<typename T>
-CImg<double>* lime::ColorimetricHSIAlgorithm1<T>::transformImage(const CImg<T> &img )
+CImg<double>* lime::ColorimetricYCbCrAlgorithm1<T>::transformImage(const CImg<T> &img )
 {
+	img.save("test1.bmp");
 	CImg<double> *resImg = new CImg<double>();
-	*resImg = img.get_RGBtoHSI();
-	
+	*resImg = img.get_RGBtoYCbCr();
+
+	resImg->save("test2.bmp");
+
 	return resImg;
 }
 
 template<typename T>
-bool lime::ColorimetricHSIAlgorithm1<T>::skinThresholds( double c1, double c2, double c3 )
+bool lime::ColorimetricYCbCrAlgorithm1<T>::skinThresholds( double c1, double c2, double c3 )
 {
-	if (c3 < threshold_I)
+	if(threshold_Cb_lower <= c2 <= threshold_Cb_higher)
 	{
-		return false;
-	}
-
-	if (threshold_S_lower && c2 < threshold_S_higher2)
-	{
-		return (c1 > threshold_H_lower3 && c1 < threshold_H_higher3);
-	}
-
-	if (c2 > threshold_S_lower && c2 < threshold_S_higher1)
-	{
-		return ((threshold_H_lower1 < c1 && c1 < threshold_H_higher1) || (threshold_H_lower2 < c1 && c1 < threshold_H_higher2));
+		return (threshold_Cr_lower <= c3 && c3 <= threshold_Cr_higher);
 	}
 
 	return false;

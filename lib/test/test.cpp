@@ -2,6 +2,7 @@
 #include <CImg.h>
 #include <lime/Segmentation.hpp>
 #include <lime/ColorimetricHSIAlgorithm1.hpp>
+#include <lime/ColorimetricYCbCrAlgorithm1.hpp>
 
 using namespace lime;
 
@@ -13,7 +14,7 @@ int main(int argc, char** argv)
 {
 	
 
-	ColorimetricHSIAlgorithm1<NumType> algo = ColorimetricHSIAlgorithm1<NumType>(0.0f);
+	ColorimetricYCbCrAlgorithm1<NumType> algo = ColorimetricYCbCrAlgorithm1<NumType>(0.0f);
     Segmentation<NumType> segm = Segmentation<NumType>(&algo);
 
 	const std::string sourcePath = "IMG_0267.jpg";
