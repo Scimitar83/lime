@@ -48,7 +48,8 @@ namespace lime{
 
 	public:
 
-		ColorimetricHSVAlgorithm1(float _driftValue = -1.0, bool _applyMedian = false):Algorithm<T>(_driftValue,_applyMedian,false){}
+		ColorimetricHSVAlgorithm1(bool _applyMedian = false, unsigned int _medianSize = 3)
+			:Algorithm<T>(_applyMedian,_medianSize){}
 		virtual ~ColorimetricHSVAlgorithm1(){}
 
 	protected:

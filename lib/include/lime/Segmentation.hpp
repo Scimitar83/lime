@@ -62,35 +62,41 @@ public:
 	*/
 	inline void switchAlgorithm(Algorithm<T>* _algorithm){algorithm = _algorithm;}
 
-	/**
-	* @brief Returns the current recall tendency (how much the Segmentation is aimed at recall vs. precision (might have no effect, see hasRecallTendency)
-	*/
-	inline float getRecallTendency(){return algorithm->getDrift();}
-
 	/** 
-	* @brief Returns true if the Segmentation currently supports the recall tendency mechanism (dependent on the used Algorithm)
+	* @brief Delivers a binary mask (1 == skin pixel, 0 == no-skin pixel) with the width and height of the original image
 	*/
-	inline bool hasRecallTendency(){return algorithm->hasDrift();}
+	inline void retrieveMask_asBinaryChannel(CImg<T> *img){algorithm->processImage(img);}
 
+	inline void retrieveMask_asAlphaChannel(CImg<T> *img)
+	{
+		CImg<T> mask(img->width,img->height,1,1);
+
+		algorithm->processImage(img);
+
+		fuseBinaryMaskWithRGBImage(img,&mask);
+	}
 	/** 
-	* @brief Used to change the recall tendency of the Segmentation (might have no effect, see hasRecallTendency)
+	* @brief Delivers a binary mask (1 == skin pixel, 0 == no-skin pixel) with the width and height of the original image
 	*/
-	inline void changeRecallTendency(float tendency){algorithm->changeDrift(tendency);}
+	inline CImg<T>* retrieveMask_asBinaryChannel(const CImg<T> &img){return algorithm->processImage(img);}
+
+	inline CImg<T>* retrieveMask_asAlphaChannel(const CImg<T> &img)
+	{
+		CImg<T> *mask = algorithm->processImage(img);
+
+		CImg<T> *resImg = new CImg<T>(img);
+
+		fuseBinaryMaskWithRGBImage(resImg,mask);
+
+		delete mask;
+
+		return resImg;
+	}
 
 	/** 
 	* @brief Delivers a binary mask (1 == skin pixel, 0 == no-skin pixel) with the width and height of the original image
 	*/
-	inline void retrieveMaskOfImage(CImg<T> *img){algorithm->processImage(img);}
-
-	/** 
-	* @brief Delivers a binary mask (1 == skin pixel, 0 == no-skin pixel) with the width and height of the original image
-	*/
-	inline CImg<T>* retrieveMaskOfImage(const CImg<T> &img){return algorithm->processImage(img);}
-
-	/** 
-	* @brief Delivers a binary mask (1 == skin pixel, 0 == no-skin pixel) with the width and height of the original image
-	*/
-	inline CImg<T>* retrieveMaskOfImage(const std::string filename)
+	inline CImg<T>* retrieveMask_asBinaryChannel(const std::string filename)
 	{
 
 		CImg<T> tempImg;
@@ -98,6 +104,23 @@ public:
 		loadImage(filename,tempImg);
 
 		return algorithm->processImage(tempImg);
+	}
+
+	inline CImg<T>* retrieveMask_asAlphaChannel(const std::string filename)
+	{
+		CImg<T> tempImg;
+
+		loadImage(filename,tempImg);
+
+		CImg<T> *resImg = new CImg<T>(tempImg);
+
+		CImg<T> *mask = algorithm->processImage(tempImg);
+
+		fuseBinaryMaskWithRGBImage(resImg,mask);
+
+		delete mask;
+
+		return resImg;
 	}
 
 protected:

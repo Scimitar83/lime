@@ -41,6 +41,7 @@
 #include <memory>
 #include <vector>
 #include <stdint.h>
+#include <exception>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
@@ -54,6 +55,59 @@ template <typename T>
 inline void loadImage( const std::string& filename, cimg_library::CImg<T>& image )
 {
     image.load( filename.c_str() );
+}
+
+template <typename T>
+inline void changeBinaryMaskToRGBChannel(cimg_library::CImg<T> *img){
+
+	int _width = img->width();
+	int _height = img->height();
+
+	for (int y = 0; y < _height; y++)
+	{
+		for (int x = 0; x < _width; x++)
+		{
+			if ((*img)(x,y,0,0) == 1)
+			{
+				(*img)(x,y,0,0)=255;
+			}
+		}
+	}
+}
+
+template <typename T>
+inline void fuseBinaryMaskWithRGBImage(cimg_library::CImg<T> *img, cimg_library::CImg<T> *mask){
+
+	int imgWidth = img->width();
+	int imgHeight = img->height();
+
+	if (imgWidth != mask->width() || imgHeight != mask->height())
+	{
+		throw std::exception("Dimensions of mask and image don't match!");
+	}
+
+	CImg<T> tempImg(*img);
+
+	img->assign(imgWidth,imgHeight,1,4);
+
+	for (int y = 0; y < imgHeight; y++)
+	{
+		for (int x = 0; x < imgWidth; x++)
+		{
+			(*img)(x,y,0,0) = tempImg(x,y,0,0);
+			(*img)(x,y,0,1) = tempImg(x,y,0,1);
+			(*img)(x,y,0,2) = tempImg(x,y,0,2);
+
+			if ((*mask)(x,y,0,0) == 1)
+			{
+				(*img)(x,y,0,3) = 255;
+			} 
+			else
+			{
+				(*img)(x,y,0,3) = 0;
+			}
+		}
+	}
 }
 
 } // end namespace lime

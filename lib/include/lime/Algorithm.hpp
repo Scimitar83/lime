@@ -57,7 +57,8 @@ namespace lime{
 		friend class Segmentation<T>;
 
 	public:
-		Algorithm(float _driftValue = -1.0, bool _applyMedian = false, bool _driftBool = false):driftValue(_driftValue),applyMedian(_applyMedian), driftBool(_driftBool){}
+		Algorithm(bool _applyMedian = false, unsigned int _medianSize = 3)
+			:applyMedian(_applyMedian),medianSize(_medianSize){}
 		virtual ~Algorithm(){}
 
 	protected:
@@ -83,40 +84,19 @@ namespace lime{
 		* @brief Uses some thresholds to determine whether a pixel is skin or non-skin
 		*/
 		virtual bool skinThresholds(double c1, double c2, double c3) = 0;
-		
-		//Inline functions
-
-		/** 
-		* @brief Returns the current driftValue (1.0 == high recall tendency, 0.0 == low recall tendency / precision oriented)
-		*/
-		virtual inline const float getDrift() const{return driftValue;}
-
-		/** 
-		* @brief Changes the current driftValue (1.0 == high recall tendency, 0.0 == low recall tendency / precision oriented)
-		*/
-		virtual inline void changeDrift(const float drift){driftValue = drift;}
-
-		/** 
-		* @brief Returns if the recall tendency mechanism is used by this algorithm or not
-		*/
-		virtual inline bool hasDrift(){return driftBool;}
 
 		// Members
 
-		/** 
-		* @brief A value between 0.0 and 1.0 which represents the recall tendency (1.0 == high recall tendency, 0.0 == low recall tendency / precision oriented)
-		*/
-		float driftValue;
-
-		/** 
-		* @brief True if the algorithm supports the recall tendency mechanism
-		*/
-		bool driftBool;
 
 		/** 
 		* @brief Determines if a median filter should be applied before the transformation or not
 		*/
 		bool applyMedian;
+
+		/** 
+		* @brief Size of the median filter
+		*/
+		unsigned int medianSize;
 	};
 
 	template<typename T>
@@ -141,7 +121,7 @@ namespace lime{
 		// Applying a median filter
 		if (this->applyMedian)
 		{
-			medianImg = img->get_blur_median(5);
+			medianImg = img->get_blur_median(this->medianSize);
 		}
 		else
 		{
