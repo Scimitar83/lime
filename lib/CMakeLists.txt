@@ -37,7 +37,8 @@ list( APPEND Lime_INC
     include/lime/util.hpp
 	include/lime/Algorithm.hpp
 	include/lime/ColorimetricHSIAlgorithm1.hpp
-	include/lime/ColorimetricYCbCrAlgorithm1.hpp)
+	include/lime/ColorimetricYCbCrAlgorithm1.hpp
+	include/lime/ColorimetricHSVAlgorithm1.hpp)
 list( APPEND Lime_SRC
 	src/lime/util.cpp)
 
