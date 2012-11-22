@@ -47,6 +47,8 @@
 using namespace cimg_library;
 
 namespace lime{
+	
+	typedef double Threshold;
 
 	// Forward-declaration of the Segmentation class
 	template<typename U> class Segmentation;

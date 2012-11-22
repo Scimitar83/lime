@@ -52,8 +52,46 @@ namespace lime{
 			unsigned int _shrinkCount = 1, unsigned int _shrinkSize = 2, bool _applyFixedGrowShrink = false, unsigned int _fixedGrowShrinkCount = 1,
 			unsigned int _fixedGrowShrinkSize = 2, bool _applyGrowBeforeShrink = true)
 			:Algorithm<T>(_applyMedian,_medianSize, _applyGrow, _growCount, _growSize, _applyShrink, _shrinkCount, _shrinkSize, _applyFixedGrowShrink, _fixedGrowShrinkCount, _fixedGrowShrinkSize,
-			_applyGrowBeforeShrink){}
+			_applyGrowBeforeShrink)
+		{
+			s_lower_1 = 10;
+			v_lower_1 = 40;
+			v_multiplier_1 = 0.1;
+			v_addend_1 = 110;
+			v_multiplier_2 = -0.4;
+			v_addend_2 = 75;
+			v_multiplier_3 = 0.08;
+			v_addend_3 = 100;
+			v_multiplier_4 = 0.5;
+			h_multiplier_1 = 0.5;
+			h_addend_1 = 35;
+		}
 		virtual ~ColorimetricHSVAlgorithm1(){}
+
+		// Getter / Setter
+
+		virtual lime::Threshold S_Lower_1() const { return this->s_lower_1; }
+		virtual void S_Lower_1(lime::Threshold val) { this->s_lower_1 = val; }
+		virtual lime::Threshold V_Lower_1() const { return this->v_lower_1; }
+		virtual void V_Lower_1(lime::Threshold val) { this->v_lower_1 = val; }
+		virtual lime::Threshold V_Multiplier_1() const { return this->v_multiplier_1; }
+		virtual void V_Multiplier_1(lime::Threshold val) { this->v_multiplier_1 = val; }
+		virtual lime::Threshold V_Addend_1() const { return this->v_addend_1; }
+		virtual void V_Addend_1(lime::Threshold val) { this->v_addend_1 = val; }
+		virtual lime::Threshold V_Multiplier_2() const { return this->v_multiplier_2; }
+		virtual void V_Multiplier_2(lime::Threshold val) { this->v_multiplier_2 = val; }
+		virtual lime::Threshold V_Addend_2() const { return this->v_addend_2; }
+		virtual void V_Addend_2(lime::Threshold val) { this->v_addend_2 = val; }
+		virtual lime::Threshold V_Multiplier_3() const { return this->v_multiplier_3; }
+		virtual void V_Multiplier_3(lime::Threshold val) { this->v_multiplier_3 = val; }
+		virtual lime::Threshold V_Addend_3() const { return this->v_addend_3; }
+		virtual void V_Addend_3(lime::Threshold val) { this->v_addend_3 = val; }
+		virtual lime::Threshold V_Multiplier_4() const { return this->v_multiplier_4; }
+		virtual void V_Multiplier_4(lime::Threshold val) { this->v_multiplier_4 = val; }
+		virtual lime::Threshold H_Multiplier_1() const { return this->h_multiplier_1; }
+		virtual void H_Multiplier_1(lime::Threshold val) { this->h_multiplier_1 = val; }
+		virtual lime::Threshold H_Addend_1() const { return this->h_addend_1; }
+		virtual void H_Addend_1(lime::Threshold val) { this->h_addend_1 = val; }
 
 	protected:
 
@@ -68,7 +106,19 @@ namespace lime{
 		* @brief Uses some thresholds to determine whether a pixel is skin or non-skin
 		*/
 		virtual bool skinThresholds(double c1, double c2, double c3);
-		
+
+		//Thresholds
+		Threshold s_lower_1;
+		Threshold v_lower_1;
+		Threshold v_multiplier_1;
+		Threshold v_addend_1;
+		Threshold v_multiplier_2;
+		Threshold v_addend_2;
+		Threshold v_multiplier_3;
+		Threshold v_addend_3;
+		Threshold v_multiplier_4;
+		Threshold h_multiplier_1;
+		Threshold h_addend_1;
 	};
 
 }
@@ -88,31 +138,36 @@ bool lime::ColorimetricHSVAlgorithm1<T>::skinThresholds( double c1, double c2, d
 	c2 *= 100;
 	c3 *= 100;
 
-	if (c2 < 10 || c3 < 40)
+	if (c2 < this->s_lower_1 || c3 < this->v_lower_1)
 	{
 		return false;
 	}
 
-	if (c2 > -c1 - 0.1*c3 + 110)
+
+	if (c2 > -c1 - this->v_multiplier_1*c3 + this->v_addend_1)
 	{
 		return false;
 	}
 
-	if (c1 > -0.4*c3 + 75)
+
+
+	if (c1 > this->v_multiplier_2	* c3 + this->v_addend_2)
 	{
 		return false;
 	}
+
+
 
 	if (c1 >= 0)
 	{
-		if (c2 > 0.08*(100-c3)*c1 + 0.5*c3)
+		if (c2 > this->v_multiplier_3*(this->v_addend_3 - c3)*c1 + this->v_multiplier_4*c3)
 		{
 			return false;
 		}
 	} 
 	else
 	{
-		if (c2 > 0.5*c1 + 35)
+		if (c2 > this->h_multiplier_1*c1 + this->h_addend_1)
 		{
 			return false;
 		}

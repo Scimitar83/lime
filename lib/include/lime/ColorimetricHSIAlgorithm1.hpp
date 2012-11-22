@@ -43,16 +43,7 @@
 #endif
 
 // Thresholds
-static const double threshold_H_lower1 = 1.0;
-static const double threshold_H_higher1 = 28.0;
-static const double threshold_H_lower2 = 332.0;
-static const double threshold_H_higher2 = 360.0;
-static const double threshold_H_lower3 = 309.0;
-static const double threshold_H_higher3 = 331.0;
-static const double threshold_I = 0.4;
-static const double threshold_S_lower = 13.0/255.0;
-static const double threshold_S_higher1 = 110.0/255.0;
-static const double threshold_S_higher2 = 75.0/255.0;
+
 
 namespace lime{
 
@@ -64,8 +55,45 @@ namespace lime{
 			unsigned int _shrinkCount = 1, unsigned int _shrinkSize = 2, bool _applyFixedGrowShrink = false, unsigned int _fixedGrowShrinkCount = 1,
 			unsigned int _fixedGrowShrinkSize = 2, bool _applyGrowBeforeShrink = true)
 			:Algorithm<T>(_applyMedian,_medianSize, _applyGrow, _growCount, _growSize, _applyShrink, _shrinkCount, _shrinkSize, _applyFixedGrowShrink, _fixedGrowShrinkCount, _fixedGrowShrinkSize,
-			_applyGrowBeforeShrink){}
+			_applyGrowBeforeShrink)
+		{
+			// Initial values for all thresholds
+
+			this->h_lower_1 = 1.0;
+			this->h_higher_1 = 28.0;
+			this->h_lower_2 = 332.0;
+			this->h_higher_2 = 360.0;
+			this->h_lower_3 = 309.0;
+			this->h_higher_3 = 331.0;
+			this->i_lower = 0.4;
+			this->s_lower = 13.0/255.0;
+			this->s_higher_1 = 110.0/255.0;
+			this->s_higher_2 = 75.0/255.0;
+		}
 		virtual ~ColorimetricHSIAlgorithm1(){}
+
+		// Getter / Setter
+
+		virtual lime::Threshold H_Lower_1() const { return h_lower_1; }
+		virtual void H_Lower_1(lime::Threshold val) { h_lower_1 = val; }
+		virtual lime::Threshold H_Higher_1() const { return h_higher_1; }
+		virtual void H_Higher_1(lime::Threshold val) { h_higher_1 = val; }
+		virtual lime::Threshold H_Lower_2() const { return h_lower_2; }
+		virtual void H_Lower_2(lime::Threshold val) { h_lower_2 = val; }
+		virtual lime::Threshold H_Higher_2() const { return h_higher_2; }
+		virtual void H_Higher_2(lime::Threshold val) { h_higher_2 = val; }
+		virtual lime::Threshold H_Lower_3() const { return h_lower_3; }
+		virtual void H_Lower_3(lime::Threshold val) { h_lower_3 = val; }
+		virtual lime::Threshold H_Higher_3() const { return h_higher_3; }
+		virtual void H_Higher_3(lime::Threshold val) { h_higher_3 = val; }
+		virtual lime::Threshold I_Lower() const { return i_lower; }
+		virtual void I_Lower(lime::Threshold val) { i_lower = val; }
+		virtual lime::Threshold S_Lower() const { return s_lower; }
+		virtual void S_Lower(lime::Threshold val) { s_lower = val; }
+		virtual lime::Threshold S_Higher_1() const { return s_higher_1; }
+		virtual void S_Higher_1(lime::Threshold val) { s_higher_1 = val; }
+		virtual lime::Threshold S_Higher_2() const { return s_higher_2; }
+		virtual void S_Higher_2(lime::Threshold val) { s_higher_2 = val; }
 
 	protected:
 
@@ -80,6 +108,19 @@ namespace lime{
 		* @brief Uses some thresholds to determine whether a pixel is skin or non-skin
 		*/
 		virtual bool skinThresholds(double c1, double c2, double c3);
+
+		// Thresholds
+
+		Threshold h_lower_1;
+		Threshold h_higher_1;
+		Threshold h_lower_2;
+		Threshold h_higher_2;
+		Threshold h_lower_3;
+		Threshold h_higher_3;
+		Threshold i_lower;
+		Threshold s_lower;
+		Threshold s_higher_1;
+		Threshold s_higher_2;
 		
 	};
 
@@ -97,19 +138,19 @@ CImg<double>* lime::ColorimetricHSIAlgorithm1<T>::transformImage(const CImg<T> &
 template<typename T>
 bool lime::ColorimetricHSIAlgorithm1<T>::skinThresholds( double c1, double c2, double c3 )
 {
-	if (c3 < threshold_I)
+	if (c3 < this->i_lower)
 	{
 		return false;
 	}
 
-	if (threshold_S_lower && c2 < threshold_S_higher2)
+	if (this->s_lower && c2 < this->s_higher_2)
 	{
-		return (c1 > threshold_H_lower3 && c1 < threshold_H_higher3);
+		return (c1 > this->h_lower_3 && c1 < this->h_higher_3);
 	}
 
-	if (c2 > threshold_S_lower && c2 < threshold_S_higher1)
+	if (c2 > this->s_lower && c2 < this->s_higher_1)
 	{
-		return ((threshold_H_lower1 < c1 && c1 < threshold_H_higher1) || (threshold_H_lower2 < c1 && c1 < threshold_H_higher2));
+		return ((this->h_lower_1 < c1 && c1 < this->h_higher_1) || (this->h_lower_2 < c1 && c1 < this->h_higher_2));
 	}
 
 	return false;

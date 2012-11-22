@@ -15,7 +15,7 @@ int main(int argc, char** argv)
 	const std::string destPath = "test.bmp";
 
 	// Basic procedure to use the library
-	ColorimetricYCbCrAlgorithm1<NumType> algo = ColorimetricYCbCrAlgorithm1<NumType>();
+	ColorimetricHSVAlgorithm1<NumType> algo = ColorimetricHSVAlgorithm1<NumType>();
 
 	// Algorithm configuration
 	algo.ApplyMedian(true);

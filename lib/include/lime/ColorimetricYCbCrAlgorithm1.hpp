@@ -42,12 +42,6 @@
 #define M_PI 3.14159265358979323846f
 #endif
 
-// Thresholds
-static const double threshold_Cb_lower = 77.0;
-static const double threshold_Cb_higher = 127.0;
-static const double threshold_Cr_lower = 133.0;
-static const double threshold_Cr_higher = 173.0;
-
 namespace lime{
 
 	template<typename T> class ColorimetricYCbCrAlgorithm1: public Algorithm<T>{
@@ -58,8 +52,25 @@ namespace lime{
 			unsigned int _shrinkCount = 1, unsigned int _shrinkSize = 2, bool _applyFixedGrowShrink = false, unsigned int _fixedGrowShrinkCount = 1,
 			unsigned int _fixedGrowShrinkSize = 2, bool _applyGrowBeforeShrink = true)
 			:Algorithm<T>(_applyMedian,_medianSize, _applyGrow, _growCount, _growSize, _applyShrink, _shrinkCount, _shrinkSize, _applyFixedGrowShrink, _fixedGrowShrinkCount, _fixedGrowShrinkSize,
-			_applyGrowBeforeShrink){}
+			_applyGrowBeforeShrink)
+		{
+			this->cb_lower = 77.0;
+			this->cb_higher = 127.0;
+			this->cr_lower = 133.0;
+			this->cr_higher = 173.0;
+		}
 		virtual ~ColorimetricYCbCrAlgorithm1(){}
+
+		// Getter / Setter
+
+		virtual lime::Threshold Cb_lower() const { return this->cb_lower; }
+		virtual void Cb_lower(lime::Threshold val) { this->cb_lower = val; }
+		virtual lime::Threshold Cb_higher() const { return this->cb_higher; }
+		virtual void Cb_higher(lime::Threshold val) { this->cb_higher = val; }
+		virtual lime::Threshold Cr_lower() const { return this->cr_lower; }
+		virtual void Cr_lower(lime::Threshold val) { this->cr_lower = val; }
+		virtual lime::Threshold Cr_higher() const { return this->cr_higher; }
+		virtual void Cr_higher(lime::Threshold val) { this->cr_higher = val; }
 
 	protected:
 
@@ -74,7 +85,15 @@ namespace lime{
 		* @brief Uses some thresholds to determine whether a pixel is skin or non-skin
 		*/
 		virtual bool skinThresholds(double c1, double c2, double c3);
-		
+
+		// Thresholds
+
+		Threshold cb_lower;
+		Threshold cb_higher;
+		Threshold cr_lower;
+		Threshold cr_higher;
+
+
 	};
 
 }
@@ -91,9 +110,9 @@ CImg<double>* lime::ColorimetricYCbCrAlgorithm1<T>::transformImage(const CImg<T>
 template<typename T>
 bool lime::ColorimetricYCbCrAlgorithm1<T>::skinThresholds( double c1, double c2, double c3 )
 {
-	if(threshold_Cb_lower <= c2 <= threshold_Cb_higher)
+	if(this->cb_lower <= c2 <= this->cb_higher)
 	{
-		return (threshold_Cr_lower <= c3 && c3 <= threshold_Cr_higher);
+		return (this->cr_lower <= c3 && c3 <= this->cr_higher);
 	}
 
 	return false;
