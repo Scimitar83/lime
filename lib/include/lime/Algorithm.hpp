@@ -257,7 +257,7 @@ namespace lime{
 	template<typename T>
 	void lime::Algorithm<T>::growShrinkAlgorithm( CImg<bool> *img, const unsigned int count, const unsigned int size )
 	{
-		for (int i = 0; i < count; i++ )
+		for (unsigned int i = 0; i < count; i++ )
 		{
 			if (this->applyFixedGrowShrink)
 			{
@@ -275,7 +275,7 @@ namespace lime{
 	template<typename T>
 	void lime::Algorithm<T>::growAlgorithm( CImg<bool> *img, const unsigned int count, const unsigned int size)
 	{
-		for(int i = 0; i < count; i++)
+		for(unsigned int i = 0; i < count; i++)
 		{
 			img->dilate(size);
 		}
@@ -284,7 +284,7 @@ namespace lime{
 	template<typename T>
 	void lime::Algorithm<T>::shrinkAlgorithm( CImg<bool> *img, const unsigned int count, const unsigned int size)
 	{
-		for(int i = 0; i < count; i++)
+		for(unsigned int i = 0; i < count; i++)
 		{
 			img->erode(size);
 		}

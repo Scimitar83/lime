@@ -59,12 +59,12 @@ inline void loadImage( const std::string& filename, cimg_library::CImg<T>& image
 
 
 
-inline cimg_library::CImg<char>* changeBinaryMaskToRGBImage(cimg_library::CImg<bool> &img){
+inline cimg_library::CImg<int>* changeBinaryMaskToRGBImage(cimg_library::CImg<bool> &img){
 
 	int _width = img.width();
 	int _height = img.height();
 
-	cimg_library::CImg<char>* resImg = new cimg_library::CImg<char>(_width,_height,1,3,0);
+	cimg_library::CImg<int>* resImg = new cimg_library::CImg<int>(_width,_height,1,3,0);
 
 	for (int y = 0; y < _height; y++)
 	{

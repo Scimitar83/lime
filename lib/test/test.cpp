@@ -18,19 +18,22 @@ int main(int argc, char** argv)
 	ColorimetricYCbCrAlgorithm1<NumType> algo = ColorimetricYCbCrAlgorithm1<NumType>();
 
 	// Algorithm configuration
-	algo.ApplyMedian(false);
-	algo.MedianSize(10);
-	algo.ApplyGrow(false);
-	algo.GrowCount(100);
-	algo.GrowSize(2);
-	algo.ApplyShrink(false);
-	algo.ShrinkCount(100);
-	algo.ShrinkSize(2);
+	algo.ApplyMedian(true);
+	algo.MedianSize(5);
+	algo.ApplyGrow(true);
+	algo.GrowCount(20);
+	algo.GrowSize(3);
+	algo.ApplyShrink(true);
+	algo.ShrinkCount(25);
+	algo.ShrinkSize(3);
+	algo.ApplyFixedGrowShrink(false);
+	algo.FixedGrowShrinkCount(10);
+	algo.FixedGrowShrinkSize(5);
 
     Segmentation<NumType> segm = Segmentation<NumType>(&algo);
 	CImg<bool> *testImg = segm.retrieveMask_asBinaryChannel(sourcePath);
 
-	CImg<char> *resImg = changeBinaryMaskToRGBImage(*testImg);
+	CImg<int> *resImg = changeBinaryMaskToRGBImage(*testImg);
 
 	resImg->save(destPath.c_str());
 

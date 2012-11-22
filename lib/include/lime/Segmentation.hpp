@@ -100,7 +100,7 @@ public:
 	*/
 	inline CImg<bool>* retrieveMask_asBinaryChannel(const std::string filename)
 	{
-		CImg<bool> tempImg;
+		CImg<T> tempImg;
 
 		loadImage(filename,tempImg);
 
@@ -109,13 +109,11 @@ public:
 
 	inline CImg<T>* retrieveMask_asAlphaChannel(const std::string filename)
 	{
-		CImg<T> tempImg;
+		CImg<T> *resImg;
 
-		loadImage(filename,tempImg);
-
-		CImg<T> *resImg = new CImg<T>(tempImg);
-
-		CImg<bool> *mask = algorithm->processImage(tempImg);
+		loadImage(filename,*resImg);
+	    
+		CImg<bool> *mask = algorithm->processImage(*resImg);
 
 		fuseBinaryMaskWithRGBImage(resImg,mask);
 
