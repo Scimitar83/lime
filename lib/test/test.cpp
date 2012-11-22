@@ -29,6 +29,7 @@ int main(int argc, char** argv)
 	algo.ApplyFixedGrowShrink(false);
 	algo.FixedGrowShrinkCount(10);
 	algo.FixedGrowShrinkSize(5);
+	algo.ApplyRegionClearing(true);
 
     Segmentation<NumType> segm = Segmentation<NumType>(&algo);
 	CImg<bool> *testImg = segm.retrieveMask_asBinaryChannel(sourcePath);

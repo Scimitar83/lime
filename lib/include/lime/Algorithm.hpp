@@ -47,8 +47,15 @@
 using namespace cimg_library;
 
 namespace lime{
-	
+
 	typedef double Threshold;
+
+	struct Point2D 
+	{
+	public:
+		unsigned int x;
+		unsigned int y;
+	};
 
 	// Forward-declaration of the Segmentation class
 	template<typename U> class Segmentation;
@@ -69,37 +76,37 @@ namespace lime{
 
 		//Getter / Setter
 
-		
+
 		virtual bool ApplyMedian() const { return applyMedian; }
 		virtual void ApplyMedian(bool val) { applyMedian = val; }
-		
+
 		virtual unsigned int MedianSize() const { return medianSize; }
 		virtual void MedianSize(unsigned int val) { medianSize = val; }
-		
+
 		virtual bool ApplyGrow() const { return applyGrow; }
 		virtual void ApplyGrow(bool val) { applyGrow = val; }
-		
+
 		virtual unsigned int GrowCount() const { return growCount; }
 		virtual void GrowCount(unsigned int val) { growCount = val; }
-		
+
 		virtual unsigned int GrowSize() const { return growSize; }
 		virtual void GrowSize(unsigned int val) { growSize = val; }
-		
+
 		virtual bool ApplyShrink() const { return applyShrink; }
 		virtual void ApplyShrink(bool val) { applyShrink = val; }
-		
+
 		virtual unsigned int ShrinkCount() const { return shrinkCount; }
 		virtual void ShrinkCount(unsigned int val) { shrinkCount = val; }
-		
+
 		virtual unsigned int ShrinkSize() const { return shrinkSize; }
 		virtual void ShrinkSize(unsigned int val) { shrinkSize = val; }
-		
+
 		virtual bool ApplyGrowBeforeShrink() const { return applyGrowBeforeShrink; }
 		virtual void ApplyGrowBeforeShrink(bool val) { applyGrowBeforeShrink = val; }
-		
+
 		virtual bool ApplyFixedGrowShrink() const { return applyFixedGrowShrink; }
 		virtual void ApplyFixedGrowShrink(bool val) { applyFixedGrowShrink = val; }
-		
+
 		virtual unsigned int FixedGrowShrinkCount() const { return fixedGrowShrinkCount; }
 		virtual void FixedGrowShrinkCount(unsigned int val) { fixedGrowShrinkCount = val; }
 
@@ -119,9 +126,9 @@ namespace lime{
 		virtual void PreDiluteSize(unsigned int val) { preDiluteSize = val; }
 
 	protected:
-		
+
 		// Abstract functions
-		
+
 		/** 
 		* @brief Processes the image and generating a bit mask out of it
 		*/
@@ -159,7 +166,7 @@ namespace lime{
 		bool applyFixedGrowShrink;
 		unsigned int fixedGrowShrinkCount;
 		unsigned int fixedGrowShrinkSize;
-		
+
 		bool applyGrowBeforeShrink;
 
 		bool applyRegionClearing;
@@ -167,7 +174,7 @@ namespace lime{
 		bool applyRegionPreDilute;
 		unsigned int preDiluteCount;
 		unsigned int preDiluteSize;
-		
+
 	private:
 
 		void growShrinkAlgorithm(CImg<bool> *img, const unsigned int count, const unsigned int size);
@@ -176,7 +183,21 @@ namespace lime{
 
 		void shrinkAlgorithm(CImg<bool> *img, const unsigned int count, const unsigned int size);
 
-		void regionClearingAlgorithm(CImg<bool> *img, const bool preDilute, const unsigned int preDiluteCount, const unsigned int preDiluteSize);
+		void pixelLabeling(CImg<bool> *img, int x, int y);
+
+		void deleteMinorRegions(CImg<bool> *img);
+
+		// Member
+
+		unsigned int regionCount;
+
+		unsigned int biggestRegion;
+
+		std::vector< std::vector <Point2D> > labeledPixels;
+
+		std::vector<unsigned int> regionSizes;
+
+		CImg<unsigned int> labelMask;
 	};
 
 	template<typename T>
@@ -205,17 +226,55 @@ namespace lime{
 
 		double c1,c2,c3;
 
-		for (int y = 0; y < _height; y++)
+		// Depending whether or not region clearing is active (which means that only the biggest region will remain at the end) some labeling is added to the loop
+		if (!this->applyRegionClearing)
 		{
-			for (int x = 0; x < _width; x++)
+			for (int y = 0; y < _height; y++)
 			{
-				c1 = (*transformedImg)(x,y,0,0);
-				c2 = (*transformedImg)(x,y,0,1);
-				c3 = (*transformedImg)(x,y,0,2);
+				for (int x = 0; x < _width; x++)
+				{
+					c1 = (*transformedImg)(x,y,0,0);
+					c2 = (*transformedImg)(x,y,0,1);
+					c3 = (*transformedImg)(x,y,0,2);
 
-				(*resImg)(x,y,0,0) = this->skinThresholds(c1,c2,c3);
+					(*resImg)(x,y,0,0) = this->skinThresholds(c1,c2,c3);
+				}
 			}
 		}
+		else
+		{
+			// Reset of the corresponding member variables
+			this->regionCount = 0;
+			this->biggestRegion = 0;
+			this->regionSizes = std::vector<unsigned int>();
+			this->regionSizes.reserve((_width * _height)/4);
+			this->labeledPixels = std::vector< std::vector <Point2D> >();
+			this->labeledPixels.reserve((_width*_height)/4);
+			this->labelMask = CImg<unsigned int>(_width,_height,1,1,0);
+
+			for (int y = 0; y < _height; y++)
+			{
+				for (int x = 0; x < _width; x++)
+				{
+					c1 = (*transformedImg)(x,y,0,0);
+					c2 = (*transformedImg)(x,y,0,1);
+					c3 = (*transformedImg)(x,y,0,2);
+
+					if (this->skinThresholds(c1,c2,c3))
+					{
+						(*resImg)(x,y,0,0) = true;
+						pixelLabeling(resImg,x,y);
+					}
+					else
+					{
+						(*resImg)(x,y,0,0) = false;
+					}
+				}
+			}
+
+			this->deleteMinorRegions(resImg);
+		}
+
 
 		// Applying Grow and / or Shrink Algorithm
 
@@ -293,69 +352,119 @@ namespace lime{
 	}
 
 	template<typename T>
-	void lime::Algorithm<T>::regionClearingAlgorithm( CImg<bool> *img, const bool preDilute, const unsigned int preDiluteCount, const unsigned int preDiluteSize )
+	inline void lime::Algorithm<T>::pixelLabeling(CImg<bool> *img, int x, int y )
 	{
-		unsigned int regionCount = 0;
-		int biggestRegionLabel = -1;
-
-		int width = img->width();
-		int height = img->height();
-
-		CImg<T> labelMask(width,height,1,1,-1);
-
-		std::vector< std::vector<&int> > pixelLabelVector;
-		std::vector<int> regionSizes;
-
-		if (preDilute)
+		// Pixel not yet labeled
+		if (this->labelMask(x,y,0,0) == 0)
 		{
-			growAlgorithm(img,preDiluteCount,preDiluteSize);
+			this->labelMask(x,y,0,0) = this->regionCount++;
+
+			std::vector<Point2D> tempVect;
+			Point2D tempPoint= {x,y};
+			tempVect.push_back(tempPoint);
+			this->labeledPixels.push_back(tempVect);
+			this->regionSizes.push_back(1);
 		}
 
-		for (int y = 0; y < height-1; y++)
+		// Compare labeling with the adjacent pixels (left-up, left, up, right-up)
+		for (int k = 0; k < 4; k++)
 		{
-			for (int x = 0; x < width-1; x++)
+			int tempX, tempY;
+
+			switch (k)
 			{
-				if ((*img)(x,y,0,0) == 1)
+				case 0: tempX = x-1;
+						tempY = y-1;
+						break;
+				case 1: tempX = x-1;
+						tempY = y;
+						break;
+				case 2: tempX = x;
+						tempY = y-1;
+						break;
+				case 3: tempX = x+1;
+						tempY = y-1;
+						break;
+				default: break;
+			}
+
+			if (tempX < 0 || tempY < 0)
+			{
+				continue;
+			}
+
+			// If there is a skin pixel at the adjacent position
+			if ((*img)(tempX,tempY,0,0))
+			{
+				
+
+				unsigned int adjacentLabel = this->labelMask(tempX,tempY,0,0);
+				unsigned int ownLabel = this->labelMask(x,y,0,0);
+
+				if (adjacentLabel != ownLabel)
 				{
-					// Pixel already labeled?
+					unsigned int smallerLabel;
+					unsigned int biggerLabel;
 
-					if (labelMask(x,y,0,0) != -1)
+					if (adjacentLabel < ownLabel)
 					{
-						labelMask(x,y,0,0) = regionCount++;
-
-						std::vector<&int> tempVect;
-						tempVect.push_back(labelMask(x,y,0,0));
-
-						pixelLabelVector.push_back(tempVect);
-						regionSizes.push_back(1);
+						smallerLabel = adjacentLabel;
+						biggerLabel = ownLabel;
+					}
+					else
+					{
+						smallerLabel = ownLabel;
+						biggerLabel = adjacentLabel;
 					}
 
+					std::vector<Point2D> *positionVect = &(this->labeledPixels.at(biggerLabel));
 
-					// Compare with the right pixel
-					if ((*img)(x+1,y,0,0) == 1)
+					// Change the labels to the new labels
+
+					for (unsigned int i = 0; i < positionVect->size();i++)
 					{
-						// Pixel already labeled
+						Point2D *posPoint = &(positionVect->at(i));
+
+						this->labelMask(posPoint->x,posPoint->y,0,0) = smallerLabel;							
 					}
-					// Compare with the down pixel
 
-					// Compare with the right-down pixel
+					this->regionSizes.at(smallerLabel) += this->regionSizes.at(biggerLabel);
+					this->regionSizes.at(biggerLabel) = 0;
 
-					// Compare with the left-down pixel
-					if (x > 0)
+					for(unsigned int i = 0; i < positionVect->size();i++)
 					{
+						this->labeledPixels.at(smallerLabel).push_back(positionVect->at(i));
+					}
 
+					this->labeledPixels.at(biggerLabel).clear();
 
+					if (this->regionSizes.at(smallerLabel) > this->regionSizes.at(this->biggestRegion))
+					{
+						this->biggestRegion = smallerLabel;
 					}
 				}
-				
 			}
-		}
-
-		if (preDilute)
-		{
-			shrinkAlgorithm(img,preDiluteCount,preDiluteSize);
 		}
 	}
 
+	template<typename T>
+	void lime::Algorithm<T>::deleteMinorRegions( CImg<bool> *img )
+	{
+		for (unsigned int i = 0; i < this->labeledPixels.size();i++)
+		{
+			// Region is biggest region or empty
+			if (this->biggestRegion == i || this->regionSizes.at(i) == 0)
+			{
+				continue;
+			}
+
+			for (unsigned int j = 0; j < this->labeledPixels.at(i).size();j++)
+			{
+				Point2D *posPoint = &this->labeledPixels.at(i).at(j);
+
+				(*img)(posPoint->x,posPoint->y,0,0) = false;
+			}
+		}
+	}
 
 }
