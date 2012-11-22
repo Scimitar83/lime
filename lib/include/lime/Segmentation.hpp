@@ -63,26 +63,28 @@ public:
 	inline void switchAlgorithm(Algorithm<T>* _algorithm){algorithm = _algorithm;}
 
 	/** 
-	* @brief Delivers a binary mask (1 == skin pixel, 0 == no-skin pixel) with the width and height of the original image
+	* @brief Adds the skin segmentation as an alpha channel (255 == skin, 0 == no-skin-pixel) as a 4th channel to the original image
 	*/
-	inline void retrieveMask_asBinaryChannel(CImg<T> *img){algorithm->processImage(img);}
-
 	inline void retrieveMask_asAlphaChannel(CImg<T> *img)
 	{
-		CImg<T> mask(img->width,img->height,1,1);
+		CImg<bool> *mask = algorithm->processImage(*img);
 
-		algorithm->processImage(img);
+		fuseBinaryMaskWithRGBImage(img,mask);
 
-		fuseBinaryMaskWithRGBImage(img,&mask);
+		delete mask;
 	}
+
 	/** 
 	* @brief Delivers a binary mask (1 == skin pixel, 0 == no-skin pixel) with the width and height of the original image
 	*/
-	inline CImg<T>* retrieveMask_asBinaryChannel(const CImg<T> &img){return algorithm->processImage(img);}
+	inline CImg<bool>* retrieveMask_asBinaryChannel(const CImg<T> &img){return algorithm->processImage(img);}
 
+	/** 
+	* @brief Adds the skin segmentation as an alpha channel (255 == skin, 0 == no-skin-pixel) as a 4th channel to the original image
+	*/
 	inline CImg<T>* retrieveMask_asAlphaChannel(const CImg<T> &img)
 	{
-		CImg<T> *mask = algorithm->processImage(img);
+		CImg<bool> *mask = algorithm->processImage(img);
 
 		CImg<T> *resImg = new CImg<T>(img);
 
@@ -96,10 +98,9 @@ public:
 	/** 
 	* @brief Delivers a binary mask (1 == skin pixel, 0 == no-skin pixel) with the width and height of the original image
 	*/
-	inline CImg<T>* retrieveMask_asBinaryChannel(const std::string filename)
+	inline CImg<bool>* retrieveMask_asBinaryChannel(const std::string filename)
 	{
-
-		CImg<T> tempImg;
+		CImg<bool> tempImg;
 
 		loadImage(filename,tempImg);
 
@@ -114,7 +115,7 @@ public:
 
 		CImg<T> *resImg = new CImg<T>(tempImg);
 
-		CImg<T> *mask = algorithm->processImage(tempImg);
+		CImg<bool> *mask = algorithm->processImage(tempImg);
 
 		fuseBinaryMaskWithRGBImage(resImg,mask);
 

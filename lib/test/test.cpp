@@ -11,19 +11,31 @@ typedef unsigned char NumType;
 
 int main(int argc, char** argv)
 {
-	const std::string sourcePath = "IMG_4021.jpg";
+	const std::string sourcePath = "IMG_0267.jpg";
 	const std::string destPath = "test.bmp";
 
 	// Basic procedure to use the library
-	ColorimetricHSVAlgorithm1<NumType> algo = ColorimetricHSVAlgorithm1<NumType>(0.0f);
+	ColorimetricYCbCrAlgorithm1<NumType> algo = ColorimetricYCbCrAlgorithm1<NumType>();
+
+	// Algorithm configuration
+	algo.ApplyMedian(false);
+	algo.MedianSize(10);
+	algo.ApplyGrow(false);
+	algo.GrowCount(100);
+	algo.GrowSize(2);
+	algo.ApplyShrink(false);
+	algo.ShrinkCount(100);
+	algo.ShrinkSize(2);
+
     Segmentation<NumType> segm = Segmentation<NumType>(&algo);
-	CImg<NumType> *testImg = segm.retrieveMask_asAlphaChannel(sourcePath);
+	CImg<bool> *testImg = segm.retrieveMask_asBinaryChannel(sourcePath);
 
-	//changeBinaryMaskToRGBChannel(testImg);
+	CImg<char> *resImg = changeBinaryMaskToRGBImage(*testImg);
 
-	testImg->save(destPath.c_str());
+	resImg->save(destPath.c_str());
 
 	delete testImg;
+	delete resImg;
 
     return 0;
 }

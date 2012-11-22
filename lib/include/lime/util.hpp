@@ -57,26 +57,33 @@ inline void loadImage( const std::string& filename, cimg_library::CImg<T>& image
     image.load( filename.c_str() );
 }
 
-template <typename T>
-inline void changeBinaryMaskToRGBChannel(cimg_library::CImg<T> *img){
 
-	int _width = img->width();
-	int _height = img->height();
+
+inline cimg_library::CImg<char>* changeBinaryMaskToRGBImage(cimg_library::CImg<bool> &img){
+
+	int _width = img.width();
+	int _height = img.height();
+
+	cimg_library::CImg<char>* resImg = new cimg_library::CImg<char>(_width,_height,1,3,0);
 
 	for (int y = 0; y < _height; y++)
 	{
 		for (int x = 0; x < _width; x++)
 		{
-			if ((*img)(x,y,0,0) == 1)
+			if (img(x,y,0,0))
 			{
-				(*img)(x,y,0,0)=255;
+				(*resImg)(x,y,0,0)=255;
+				(*resImg)(x,y,0,1)=255;
+				(*resImg)(x,y,0,2)=255;
 			}
 		}
 	}
+
+	return resImg;
 }
 
 template <typename T>
-inline void fuseBinaryMaskWithRGBImage(cimg_library::CImg<T> *img, cimg_library::CImg<T> *mask){
+inline void fuseBinaryMaskWithRGBImage(cimg_library::CImg<T> *img, cimg_library::CImg<bool> *mask){
 
 	int imgWidth = img->width();
 	int imgHeight = img->height();
@@ -88,6 +95,7 @@ inline void fuseBinaryMaskWithRGBImage(cimg_library::CImg<T> *img, cimg_library:
 
 	CImg<T> tempImg(*img);
 
+	// Changes the image in-place to an image with 4 channels
 	img->assign(imgWidth,imgHeight,1,4);
 
 	for (int y = 0; y < imgHeight; y++)
@@ -98,7 +106,7 @@ inline void fuseBinaryMaskWithRGBImage(cimg_library::CImg<T> *img, cimg_library:
 			(*img)(x,y,0,1) = tempImg(x,y,0,1);
 			(*img)(x,y,0,2) = tempImg(x,y,0,2);
 
-			if ((*mask)(x,y,0,0) == 1)
+			if ((*mask)(x,y,0,0))
 			{
 				(*img)(x,y,0,3) = 255;
 			} 

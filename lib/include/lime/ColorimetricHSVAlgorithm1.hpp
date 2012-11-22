@@ -48,8 +48,11 @@ namespace lime{
 
 	public:
 
-		ColorimetricHSVAlgorithm1(bool _applyMedian = false, unsigned int _medianSize = 3)
-			:Algorithm<T>(_applyMedian,_medianSize){}
+		ColorimetricHSVAlgorithm1(bool _applyMedian = false, unsigned int _medianSize = 3, bool _applyGrow = false, unsigned int _growCount = 1, unsigned int _growSize = 2, bool _applyShrink = false,
+			unsigned int _shrinkCount = 1, unsigned int _shrinkSize = 2, bool _applyFixedGrowShrink = false, unsigned int _fixedGrowShrinkCount = 1,
+			unsigned int _fixedGrowShrinkSize = 2, bool _applyGrowBeforeShrink = true)
+			:Algorithm<T>(_applyMedian,_medianSize, _applyGrow, _growCount, _growSize, _applyShrink, _shrinkCount, _shrinkSize, _applyFixedGrowShrink, _fixedGrowShrinkCount, _fixedGrowShrinkSize,
+			_applyGrowBeforeShrink){}
 		virtual ~ColorimetricHSVAlgorithm1(){}
 
 	protected:
