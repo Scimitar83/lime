@@ -23,18 +23,13 @@
 #pragma once
 
 ///
-/// \file    util.hpp
-///
-/// \package lime
-/// \version 0.1.0
-///
-/// \brief   collection of utility functions
-///
-/// \details this file contains a collection of small utility functions,
-///          to simplify development of the lime library
-///
-/// \author  Alexandru Duliu
-/// \date    Oct 29, 2012
+/// @file util.hpp
+/// @author Alexandru Duliu, Alexander Schoch
+/// @version 0.2.0
+/// @date Oct 29, 2012 - First creation
+/// @brief Collection of utility functions
+/// @details This file contains a collection of small utility functions to simplify development of the lime library.
+/// @package lime
 ///
 
 #include <cmath>

@@ -22,18 +22,11 @@
 #pragma once
 
 ///
-/// \file    ColorimetricHSIAlgorithm1.hpp
-/// \class   ColorimetricHSIAlgorithm1
-///
-/// \package lime
-/// \version 0.2.0
-///
-/// \brief Subclass of Algorithm
-///
-/// \detail Subclass of Algorithm which uses a transformation to and fixed thresholds of the HSI color space for colorimetric skin segmentation 
-///
-/// \author  Aleander Schoch
-/// \date    Nov 13, 2012 - first creation and implementation
+/// @file ColorimetricHSIAlgorithm1.hpp
+/// @brief Contains the ColorimetricHSIAlgorithm1 class
+/// @author Alexander Schoch
+/// @date Nov 13, 2012 - First creation
+/// @package lime
 ///
 
 #include <lime/Algorithm.hpp>
@@ -42,20 +35,29 @@
 #define M_PI 3.14159265358979323846f
 #endif
 
-// Thresholds
-
-
 namespace lime{
 
+	///
+	/// @class   ColorimetricHSIAlgorithm1
+	///
+	/// @version 0.3.0
+	///
+	/// @brief Subclass of Algorithm
+	///
+	/// @detail Subclass of Algorithm which uses a transformation to and fixed thresholds of the HSI color space for colorimetric skin segmentation 
+	///
+	/// @author  Aleander Schoch
+	/// @date    Nov 13, 2012 - First creation and implementation
+	///
 	template<typename T> class ColorimetricHSIAlgorithm1: public Algorithm<T>{
 
 	public:
 
 		ColorimetricHSIAlgorithm1(bool _applyMedian = false, unsigned int _medianSize = 3, bool _applyGrow = false, unsigned int _growCount = 1, unsigned int _growSize = 2, bool _applyShrink = false,
 			unsigned int _shrinkCount = 1, unsigned int _shrinkSize = 2, bool _applyFixedGrowShrink = false, unsigned int _fixedGrowShrinkCount = 1,
-			unsigned int _fixedGrowShrinkSize = 2, bool _applyGrowBeforeShrink = true)
+			unsigned int _fixedGrowShrinkSize = 2, bool _applyGrowBeforeShrink = true, bool _applyRegionClearing = false)
 			:Algorithm<T>(_applyMedian,_medianSize, _applyGrow, _growCount, _growSize, _applyShrink, _shrinkCount, _shrinkSize, _applyFixedGrowShrink, _fixedGrowShrinkCount, _fixedGrowShrinkSize,
-			_applyGrowBeforeShrink)
+			_applyGrowBeforeShrink, _applyRegionClearing)
 		{
 			// Initial values for all thresholds
 

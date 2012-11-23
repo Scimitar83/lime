@@ -22,18 +22,11 @@
 #pragma once
 
 ///
-/// \file    ColorimetricHSVAlgorithm1.hpp
-/// \class   ColorimetricHSVAlgorithm1
-///
-/// \package lime
-/// \version 0.2.0
-///
-/// \brief Subclass of Algorithm
-///
-/// \detail Subclass of Algorithm which uses a transformation to and fixed thresholds of the HSV color space for colorimetric skin segmentation 
-///
-/// \author  Aleander Schoch
-/// \date    Nov 14, 2012 - first creation and implementation
+/// @file ColorimetricHSVAlgorithm1.hpp
+/// @brief Contains the ColorimetricHSVAlgorithm1 class
+/// @author Alexander Schoch
+/// @date Nov 13, 2012 - First creation
+/// @package lime
 ///
 
 #include <lime/Algorithm.hpp>
@@ -44,15 +37,27 @@
 
 namespace lime{
 
+	///
+	/// @class   ColorimetricHSVAlgorithm1
+	///
+	/// @version 0.2.0
+	///
+	/// @brief Subclass of Algorithm
+	///
+	/// @detail Subclass of Algorithm which uses a transformation to and fixed thresholds of the HSV color space for colorimetric skin segmentation 
+	///
+	/// @author  Aleander Schoch
+	/// @date    Nov 14, 2012 - First creation and implementation
+	///
 	template<typename T> class ColorimetricHSVAlgorithm1: public Algorithm<T>{
 
 	public:
 
 		ColorimetricHSVAlgorithm1(bool _applyMedian = false, unsigned int _medianSize = 3, bool _applyGrow = false, unsigned int _growCount = 1, unsigned int _growSize = 2, bool _applyShrink = false,
 			unsigned int _shrinkCount = 1, unsigned int _shrinkSize = 2, bool _applyFixedGrowShrink = false, unsigned int _fixedGrowShrinkCount = 1,
-			unsigned int _fixedGrowShrinkSize = 2, bool _applyGrowBeforeShrink = true)
+			unsigned int _fixedGrowShrinkSize = 2, bool _applyGrowBeforeShrink = true, bool _applyRegionClearing = false)
 			:Algorithm<T>(_applyMedian,_medianSize, _applyGrow, _growCount, _growSize, _applyShrink, _shrinkCount, _shrinkSize, _applyFixedGrowShrink, _fixedGrowShrinkCount, _fixedGrowShrinkSize,
-			_applyGrowBeforeShrink)
+			_applyGrowBeforeShrink, _applyRegionClearing)
 		{
 			s_lower_1 = 10;
 			v_lower_1 = 40;

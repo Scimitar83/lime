@@ -21,21 +21,6 @@
 
 #pragma once
 
-///
-/// \file    ColorimetricYCbCrAlgorithm1.hpp
-/// \class   ColorimetricYCbCrAlgorithm1
-///
-/// \package lime
-/// \version 0.2.0
-///
-/// \brief Subclass of Algorithm
-///
-/// \detail Subclass of Algorithm which uses a transformation to and fixed thresholds of the YCbCr color space for colorimetric skin segmentation 
-///
-/// \author  Aleander Schoch
-/// \date    Nov 14, 2012 - first creation and implementation
-///
-
 #include <lime/Algorithm.hpp>
 
 #ifndef M_PI
@@ -44,15 +29,35 @@
 
 namespace lime{
 
+	///
+	/// @file ColorimetricYCbCrAlgorithm1.hpp
+	/// @brief Contains the ColorimetricYCbCrAlgorithm1 class
+	/// @author Alexander Schoch
+	/// @date Nov 13, 2012 - First creation
+	/// @package lime
+	///
+
+	///
+	/// @class   ColorimetricYCbCrAlgorithm1
+	///
+	/// @version 0.2.0
+	///
+	/// @brief Subclass of Algorithm
+	///
+	/// @detail Subclass of Algorithm which uses a transformation to and fixed thresholds of the YCbCr color space for colorimetric skin segmentation 
+	///
+	/// @author  Aleander Schoch
+	/// @date    Nov 14, 2012 - First creation and implementation
+	///
 	template<typename T> class ColorimetricYCbCrAlgorithm1: public Algorithm<T>{
 
 	public:
 
 		ColorimetricYCbCrAlgorithm1(bool _applyMedian = false, unsigned int _medianSize = 3, bool _applyGrow = false, unsigned int _growCount = 1, unsigned int _growSize = 2, bool _applyShrink = false,
 			unsigned int _shrinkCount = 1, unsigned int _shrinkSize = 2, bool _applyFixedGrowShrink = false, unsigned int _fixedGrowShrinkCount = 1,
-			unsigned int _fixedGrowShrinkSize = 2, bool _applyGrowBeforeShrink = true)
+			unsigned int _fixedGrowShrinkSize = 2, bool _applyGrowBeforeShrink = true, bool _applyRegionClearing = false)
 			:Algorithm<T>(_applyMedian,_medianSize, _applyGrow, _growCount, _growSize, _applyShrink, _shrinkCount, _shrinkSize, _applyFixedGrowShrink, _fixedGrowShrinkCount, _fixedGrowShrinkSize,
-			_applyGrowBeforeShrink)
+			_applyGrowBeforeShrink, _applyRegionClearing)
 		{
 			this->cb_lower = 77.0;
 			this->cb_higher = 127.0;

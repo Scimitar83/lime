@@ -23,19 +23,11 @@
 #pragma once
 
 ///
-/// \file    Segmentation.hpp
-/// \class   Segmentation
-///
-/// \package lime
-/// \version 0.2.0
-///
-/// \brief   base class for image segmentation
-///
-/// \details this is the base class of segmentations using the lime library
-///
-/// \author  Alexandru Duliu, Alexander Schoch
-/// \date    Oct 29, 2012 - first creation
-/// \data    Nov 13, 2012 - basic structure
+/// @file Segmentation.hpp
+/// @brief Contains the Segmentation class
+/// @author Alexandru Duliu, Alexander Schoch
+/// @date Nov 13, 2012 - First creation
+/// @package lime
 ///
 
 
@@ -49,6 +41,20 @@ using namespace cimg_library;
 namespace lime
 {
 
+///
+/// @class Segmentation
+///
+/// @version 0.2.0
+///
+/// @brief Base class for image segmentation
+///
+/// @details this is the base class of segmentations using the lime library
+///
+/// @author Alexandru Duliu, Alexander Schoch
+/// @date Oct 29, 2012 - First creation
+/// @date Nov 13, 2012 - Basic structure
+/// @date Nov 23, 2012 - Some small adjustments including the possibility to retrieve a mask as alpha channel 
+///
 template<typename T = int> class Segmentation
 {
 public:

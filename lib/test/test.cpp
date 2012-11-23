@@ -15,16 +15,16 @@ int main(int argc, char** argv)
 	const std::string destPath = "test.bmp";
 
 	// Basic procedure to use the library
-	ColorimetricHSVAlgorithm1<NumType> algo = ColorimetricHSVAlgorithm1<NumType>();
+	ColorimetricYCbCrAlgorithm1<NumType> algo = ColorimetricYCbCrAlgorithm1<NumType>();
 
 	// Algorithm configuration
 	algo.ApplyMedian(true);
-	algo.MedianSize(5);
+	algo.MedianSize(3);
 	algo.ApplyGrow(true);
 	algo.GrowCount(20);
 	algo.GrowSize(3);
 	algo.ApplyShrink(true);
-	algo.ShrinkCount(25);
+	algo.ShrinkCount(22);
 	algo.ShrinkSize(3);
 	algo.ApplyFixedGrowShrink(false);
 	algo.FixedGrowShrinkCount(10);

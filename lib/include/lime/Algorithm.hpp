@@ -22,19 +22,13 @@
 #pragma once
 
 ///
-/// \file    Algorithm.hpp
-/// \class   Algorithm
+/// @file Algorithm.hpp
+/// @brief Contains the Algorithm base class as well as the Threshold typedef and the Point2D struct
+/// @author Alexander Schoch
+/// @date Nov 13, 2012 - First creation
+/// @package lime
 ///
-/// \package lime
-/// \version 0.2.0
-///
-/// \brief Abstract base class for all Skin Segmentation algorithms
-///
-/// \detail Abstract base class for all Skin Segmentation algorithms
-///
-/// \author  Aleander Schoch
-/// \date    Nov 13, 2012 - first creation and implementation
-///
+
 
 #ifndef _USE_MATH_DEFINES
 #define _USE_MATH_DEFINES
@@ -46,36 +40,79 @@
 
 using namespace cimg_library;
 
+///
+/// @namespace lime
+/// @brief The default namespace of the lime library
+///
 namespace lime{
 
+	///
+	/// @typedef Threshold
+	/// @brief Simple typedef that defines a Threshold as a floating point variable.
+	///
 	typedef double Threshold;
 
-	struct Point2D 
+	///
+	/// @struct Point2D
+	/// @brief This struct provides 2D coordinates in Cartesian space.
+	///
+	struct Point2D
 	{
 	public:
 		unsigned int x;
 		unsigned int y;
 	};
 
-	// Forward-declaration of the Segmentation class
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
 	template<typename U> class Segmentation;
 
+#endif
+	
+
+
+	///
+	/// @class Algorithm
+	///
+	/// @version 0.3.0
+	///
+	/// @brief Abstract base class for all Skin Segmentation algorithms.
+	///
+	/// @detail This abstract template class features a lot of the functionality of the skin segmentation process and provides it to the Segmentation class.
+	/// The main function of its subclasses is to implement a threshold function and a function to transform the Image from the RGB space into another color space.
+	/// Virtually everything else is handles here.
+	///
+	/// @author Aleander Schoch
+	/// @date Nov 13, 2012 - First creation and implementation
+	/// @date Nov 23, 2012 - Region grow/shrink and region clearing (only the largest region remains) implemented
+	/// @tparam T - Can be of any basic data type and should be the same as the one of the input image.
+	///
 	template<typename T = int> class Algorithm{
 
-		// friend declaration for the Segmentation class
-		friend class Segmentation<T>;
+		friend class Segmentation<T>; ///< Friend declaration of the Segmentation class
 
 	public:
 
+		///
+		/// @brief A constructor with default values for each parameter. Can be used to set all the possible variables (except the thresholds of the base class) right at the start.
+		///
 		Algorithm(bool _applyMedian = false, unsigned int _medianSize = 3, bool _applyGrow = false, unsigned int _growCount = 1, unsigned int _growSize = 2, bool _applyShrink = false,
 			unsigned int _shrinkCount = 1, unsigned int _shrinkSize = 2, bool _applyFixedGrowShrink = false, unsigned int _fixedGrowShrinkCount = 1,
-			unsigned int _fixedGrowShrinkSize = 2, bool _applyGrowBeforeShrink = true)
+			unsigned int _fixedGrowShrinkSize = 2, bool _applyGrowBeforeShrink = true, bool _applyRegionClearing = false)
 			:applyMedian(_applyMedian),medianSize(_medianSize), applyGrow(_applyGrow), growCount(_growCount), growSize(_growSize), applyShrink(_applyShrink), shrinkCount(_shrinkCount),
-			shrinkSize(_shrinkSize),applyFixedGrowShrink(_applyFixedGrowShrink), fixedGrowShrinkCount(_fixedGrowShrinkCount), fixedGrowShrinkSize(_fixedGrowShrinkSize), applyGrowBeforeShrink(_applyGrowBeforeShrink){}
+			shrinkSize(_shrinkSize),applyFixedGrowShrink(_applyFixedGrowShrink), fixedGrowShrinkCount(_fixedGrowShrinkCount), fixedGrowShrinkSize(_fixedGrowShrinkSize), 
+			applyGrowBeforeShrink(_applyGrowBeforeShrink), applyRegionClearing(_applyRegionClearing){}
+		///
+		/// @brief The destructor of this class.
+		///
 		virtual ~Algorithm(){}
 
-		//Getter / Setter
-
+		///
+		/// @defgroup Algorithm_GetSet Getter and Setter
+		/// @addtogroup Algorithm_GetSet
+		/// @{
+		///
 
 		virtual bool ApplyMedian() const { return applyMedian; }
 		virtual void ApplyMedian(bool val) { applyMedian = val; }
@@ -116,14 +153,9 @@ namespace lime{
 		virtual bool ApplyRegionClearing() const { return applyRegionClearing; }
 		void ApplyRegionClearing(bool val) { applyRegionClearing = val; }
 
-		virtual bool ApplyRegionPreDilute() const { return applyRegionPreDilute; }
-		virtual void ApplyRegionPreDilute(bool val) { applyRegionPreDilute = val; }
-
-		virtual unsigned int PreDiluteCount() const { return preDiluteCount; }
-		virtual void PreDiluteCount(unsigned int val) { preDiluteCount = val; }
-
-		virtual unsigned int PreDiluteSize() const { return preDiluteSize; }
-		virtual void PreDiluteSize(unsigned int val) { preDiluteSize = val; }
+		///
+		/// @}
+		///
 
 	protected:
 
@@ -170,10 +202,6 @@ namespace lime{
 		bool applyGrowBeforeShrink;
 
 		bool applyRegionClearing;
-
-		bool applyRegionPreDilute;
-		unsigned int preDiluteCount;
-		unsigned int preDiluteSize;
 
 	private:
 
