@@ -40,7 +40,7 @@ namespace lime{
 	///
 	/// @class   ColorimetricHSVAlgorithm1
 	///
-	/// @version 0.2.0
+	/// @version 0.3.0
 	///
 	/// @brief Subclass of Algorithm
 	///
@@ -53,6 +53,9 @@ namespace lime{
 
 	public:
 
+		///
+		/// @brief The constructor that passes all arguments to the constructor of the base class
+		///
 		ColorimetricHSVAlgorithm1(bool _applyMedian = false, unsigned int _medianSize = 3, bool _applyGrow = false, unsigned int _growCount = 1, unsigned int _growSize = 2, bool _applyShrink = false,
 			unsigned int _shrinkCount = 1, unsigned int _shrinkSize = 2, bool _applyFixedGrowShrink = false, unsigned int _fixedGrowShrinkCount = 1,
 			unsigned int _fixedGrowShrinkSize = 2, bool _applyGrowBeforeShrink = true, bool _applyRegionClearing = false)
@@ -71,6 +74,10 @@ namespace lime{
 			h_multiplier_1 = 0.5;
 			h_addend_1 = 35;
 		}
+
+		///
+		/// @brief Basis destructor
+		///
 		virtual ~ColorimetricHSVAlgorithm1(){}
 
 		// Getter / Setter
@@ -102,14 +109,18 @@ namespace lime{
 
 		// virtual functions
 		
-		/** 
-		* @brief Transforms the image data from RGB to HSI color space
-		*/
+		///
+		/// @brief Transforms the image data from the RGB color space to the HSV color space.
+		///
 		virtual CImg<double>* transformImage(const CImg<T> &img);
 
-		/** 
-		* @brief Uses some thresholds to determine whether a pixel is skin or non-skin
-		*/
+		///
+		/// @brief Uses algorithm-specific thresholds in the HSV color space to determine whether a pixel is skin or non-skin.
+		/// @param c1 The first channel of the image data (here: H)
+		/// @param c2 The second channel of the image data (here: S)
+		/// @param c3 The third channel of the image data (here: V)
+		/// @return true = skin, false = no skin
+		///
 		virtual bool skinThresholds(double c1, double c2, double c3);
 
 		//Thresholds

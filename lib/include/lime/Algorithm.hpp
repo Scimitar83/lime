@@ -64,13 +64,11 @@ namespace lime{
 	};
 
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+#ifndef DOXYGEN_SHOULD_SKIP_THIS // This template forward declaration produces some problems in combination with doxygen so I disables doxygen for it
 
 	template<typename U> class Segmentation;
 
 #endif
-	
-
 
 	///
 	/// @class Algorithm
@@ -81,12 +79,12 @@ namespace lime{
 	///
 	/// @detail This abstract template class features a lot of the functionality of the skin segmentation process and provides it to the Segmentation class.
 	/// The main function of its subclasses is to implement a threshold function and a function to transform the Image from the RGB space into another color space.
-	/// Virtually everything else is handles here.
+	/// Virtually everything else is handled here. Because of the fact that it is an abstract class it builds a "Strategic Pattern" together with Segmentation and its subclasses.
 	///
 	/// @author Aleander Schoch
 	/// @date Nov 13, 2012 - First creation and implementation
 	/// @date Nov 23, 2012 - Region grow/shrink and region clearing (only the largest region remains) implemented
-	/// @tparam T - Can be of any basic data type and should be the same as the one of the input image.
+	/// @tparam T - Can be of any basic data type and should be the same as the one of the input image (e.g. double or char).
 	///
 	template<typename T = int> class Algorithm{
 
@@ -108,123 +106,202 @@ namespace lime{
 		///
 		virtual ~Algorithm(){}
 
-		///
-		/// @defgroup Algorithm_GetSet Getter and Setter
-		/// @addtogroup Algorithm_GetSet
-		/// @{
-		///
+		virtual bool ApplyMedian() const { return applyMedian; } ///< Returns if the median filter is used or not.
+		virtual void ApplyMedian(bool val) { applyMedian = val; } ///< Can activate / deactivate the use of the median filter.
 
-		virtual bool ApplyMedian() const { return applyMedian; }
-		virtual void ApplyMedian(bool val) { applyMedian = val; }
+		virtual unsigned int MedianSize() const { return medianSize; } ///< Returns the size of the median filter  (only meaningful if the median filter is activated).
+		virtual void MedianSize(unsigned int val) { medianSize = val; } ///< Can be used to set the size of the median filter (only meaningful if the median filter is activated).
 
-		virtual unsigned int MedianSize() const { return medianSize; }
-		virtual void MedianSize(unsigned int val) { medianSize = val; }
+		virtual bool ApplyGrow() const { return applyGrow; } ///< Returns if the region grow algorithm is used.
+		virtual void ApplyGrow(bool val) { applyGrow = val; } ///< Can activate / deactivate the region grow algorithm which can help to repair holes in the skin structure.
 
-		virtual bool ApplyGrow() const { return applyGrow; }
-		virtual void ApplyGrow(bool val) { applyGrow = val; }
+		virtual unsigned int GrowCount() const { return growCount; } ///< Returns the number of times the region grow algorithm is getting activated (only meaningful if the region grow algorithm is activated).
+		virtual void GrowCount(unsigned int val) { growCount = val; } ///< Can be used to set the number of times the region grow algorithm should activate (only meaningful if the region grow algorithm is activated).
 
-		virtual unsigned int GrowCount() const { return growCount; }
-		virtual void GrowCount(unsigned int val) { growCount = val; }
+		virtual unsigned int GrowSize() const { return growSize; } ///< Returns the size of the kernel of the region grow algorithm (only meaningful if the region grow algorithm is activated).
+		virtual void GrowSize(unsigned int val) { growSize = val; } ///< Can set the size of the kernel of the region grow algorithm (only meaningful if the region grow algorithm is activated).
 
-		virtual unsigned int GrowSize() const { return growSize; }
-		virtual void GrowSize(unsigned int val) { growSize = val; }
+		virtual bool ApplyShrink() const { return applyShrink; } ///< Returns if the region shrink algorithm is used.
+		virtual void ApplyShrink(bool val) { applyShrink = val; } ///< Can activate / deactivate the region shrink algorithm which can help to remove small falsely detected skin areas.
 
-		virtual bool ApplyShrink() const { return applyShrink; }
-		virtual void ApplyShrink(bool val) { applyShrink = val; }
+		virtual unsigned int ShrinkCount() const { return shrinkCount; } ///< Returns the number of times the region shrink algorithm is getting activated (only meaningful if the region shrink algorithm is activated).
+		virtual void ShrinkCount(unsigned int val) { shrinkCount = val; } ///< Can be used to set the number of times the region shrink algorithm should activate (only meaningful if the region shrink algorithm is activated).
 
-		virtual unsigned int ShrinkCount() const { return shrinkCount; }
-		virtual void ShrinkCount(unsigned int val) { shrinkCount = val; }
+		virtual unsigned int ShrinkSize() const { return shrinkSize; } ///< Returns the size of the kernel of the region shrink algorithm (only meaningful if the region shrink algorithm is activated).
+		virtual void ShrinkSize(unsigned int val) { shrinkSize = val; }///< Can set the size of the kernel of the region shrink algorithm (only meaningful if the region shrink algorithm is activated).
 
-		virtual unsigned int ShrinkSize() const { return shrinkSize; }
-		virtual void ShrinkSize(unsigned int val) { shrinkSize = val; }
+		virtual bool ApplyGrowBeforeShrink() const { return applyGrowBeforeShrink; } ///< Returns if the grow algorithm (ALL cycles of it) is used before the shrink algorithm or the other way around.
+		virtual void ApplyGrowBeforeShrink(bool val) { applyGrowBeforeShrink = val; } ///< Can be used to determine if the grow algorithm (ALL cycles of it) should be used before the shrink algorithm or the other way around.
 
-		virtual bool ApplyGrowBeforeShrink() const { return applyGrowBeforeShrink; }
-		virtual void ApplyGrowBeforeShrink(bool val) { applyGrowBeforeShrink = val; }
+		virtual bool ApplyFixedGrowShrink() const { return applyFixedGrowShrink; } ///< Returns if the fixed region grow-shrink algorithm is used.
+		virtual void ApplyFixedGrowShrink(bool val) { applyFixedGrowShrink = val; } ///< Can be used to activate / deactivate the fixed region grow-shrink algorithm.
 
-		virtual bool ApplyFixedGrowShrink() const { return applyFixedGrowShrink; }
-		virtual void ApplyFixedGrowShrink(bool val) { applyFixedGrowShrink = val; }
+		virtual unsigned int FixedGrowShrinkCount() const { return fixedGrowShrinkCount; } ///< Returns the number of times the fixed region grow-shrink algorithm is getting activated (only meaningful if it is activated).
+		virtual void FixedGrowShrinkCount(unsigned int val) { fixedGrowShrinkCount = val; } ///< Can be used to set the number of times the fixed region grow-shrink algorithm should activate (only meaningful if it is activated).
 
-		virtual unsigned int FixedGrowShrinkCount() const { return fixedGrowShrinkCount; }
-		virtual void FixedGrowShrinkCount(unsigned int val) { fixedGrowShrinkCount = val; }
+		virtual unsigned int FixedGrowShrinkSize() const { return fixedGrowShrinkSize; } ///< Returns the size of the kernel of the fixed region grow-shrink algorithm (only meaningful if it is activated).
+		virtual void FixedGrowShrinkSize(unsigned int val) { fixedGrowShrinkSize = val; } ///< Can set the size of the kernel of the fixed region grow-shrink algorithm (only meaningful if is activated).
 
-		virtual unsigned int FixedGrowShrinkSize() const { return fixedGrowShrinkSize; }
-		virtual void FixedGrowShrinkSize(unsigned int val) { fixedGrowShrinkSize = val; }
-
-		virtual bool ApplyRegionClearing() const { return applyRegionClearing; }
-		void ApplyRegionClearing(bool val) { applyRegionClearing = val; }
-
-		///
-		/// @}
-		///
+		virtual bool ApplyRegionClearing() const { return applyRegionClearing; } ///< Returns if the region clearing algorithm is used (deletes all skin regions but the biggest one).
+		void ApplyRegionClearing(bool val) { applyRegionClearing = val; } ///< Can be used to activate / deactivate the region clearing algorithm (deletes all skin regions but the biggest one).
 
 	protected:
 
 		// Abstract functions
 
-		/** 
-		* @brief Processes the image and generating a bit mask out of it
-		*/
+		///
+		/// @brief Processes the image and generates a bit mask out of it
+		/// @param img A reference to the original image data in CImg format with an arbitrary numerical standard data type
+		/// @return A bit mask in CImg<bool> format with the same width and height as the input image where true = skin and false = no skin
+		///
 		virtual CImg<bool>* processImage(const CImg<T> &img);
 
-		/** 
-		* @brief Transforms the image data from RGB the target color space or performs other transformations
-		*/
+		///
+		/// @brief Transforms the image data from the RGB color space to the target color space or performs other transformations. Has to be implemented by a specialized algorithm.
+		///
 		virtual CImg<double>* transformImage(const CImg<T> &img) = 0;
 
-		/** 
-		* @brief Uses some thresholds to determine whether a pixel is skin or non-skin
-		*/
+		///
+		/// @brief Uses algorithm-specific thresholds to determine whether a pixel is skin or non-skin. Has to be implemented by a specialized algorithm.
+		/// @param c1 The first channel of the image data (e.g. R in RGB)
+		/// @param c2 The second channel of the image data (e.g. G in RGB)
+		/// @param c3 The third channel of the image data (e.g. B in RGB)
+		/// @return true = skin, false = no skin
+		///
 		virtual bool skinThresholds(double c1, double c2, double c3) = 0;
 
 		// Variables
 
-		/** 
-		* @brief Determines if a median filter should be applied before the transformation or not
-		*/
+		///
+		/// @brief Determines if a median filter should be applied before the transformation or not.
+		///
 		bool applyMedian;
-		/** 
-		* @brief Size of the median filter
-		*/
+
+		///
+		/// @brief Size (radius) of the median filter kernel
+		///
 		unsigned int medianSize;
 
+		///
+		/// @brief Determines if the region grow algorithm should be applied to the bit mask.
+		///
 		bool applyGrow;
+
+		///
+		/// @brief The number of times the grow algorithm should be applied (only has an effect if applyGrow = true).
+		///
 		unsigned int growCount;
+
+		///
+		/// @brief The size of the grow algorithm kernel (only has an effect if applyGrow = true).
+		///
 		unsigned int growSize;
 
+		///
+		/// @brief Determines if the region shrink algorithm should be applied to the bit mask.
+		///
 		bool applyShrink;
+
+		///
+		/// @brief The number of times the shrink algorithm should be applied (only has an effect if applyShrink = true).
+		///
 		unsigned int shrinkCount;
+
+		///
+		/// @brief The size of the shrink algorithm kernel (only has an effect if applyShrink = true).
+		///
 		unsigned int shrinkSize;
 
+		///
+		/// @brief Determines if a fixed region grow and shrink algorithm should be applied to the bit mask (always 1:1).
+		///
 		bool applyFixedGrowShrink;
+
+		///
+		/// @brief The number of times the fixed grow and shrink algorithm should be applied (only has an effect if applyFixedGrowShrink = true).
+		///
 		unsigned int fixedGrowShrinkCount;
+
+		///
+		/// @brief The size of the fixed grow and shrink algorithm kernel (only has an effect if applyFixedGrowShrink = true).
+		///
 		unsigned int fixedGrowShrinkSize;
 
+		///
+		/// @brief Determines if the region grow algorithm comes before the region shrink algorithm or the other way around.
+		///
 		bool applyGrowBeforeShrink;
 
+		///
+		/// @brief Determines if the region clearing algorithm should be used (which indexes regions and deletes all but the largest one)
+		///
 		bool applyRegionClearing;
 
 	private:
 
-		void growShrinkAlgorithm(CImg<bool> *img, const unsigned int count, const unsigned int size);
+		///
+		/// @brief Applies a grow and shrink algorithm on the bit mask (grow:shrink = 1:1).
+		/// @param img The bit mask
+		/// @param count Number of times the algorithm should be used
+		/// @param size Size of the algorithm kernel
+		///
+		virtual void growShrinkAlgorithm(CImg<bool> *img, const unsigned int count, const unsigned int size);
 
-		void growAlgorithm(CImg<bool> *img, const unsigned int count, const unsigned int size);
+		///
+		/// @brief Applies a grow algorithm on the bit mask.
+		/// @param img The bit mask
+		/// @param count Number of times the algorithm should be used
+		/// @param size Size of the algorithm kernel
+		///
+		virtual void growAlgorithm(CImg<bool> *img, const unsigned int count, const unsigned int size);
 
-		void shrinkAlgorithm(CImg<bool> *img, const unsigned int count, const unsigned int size);
+		///
+		/// @brief Applies a shrink algorithm on the bit mask.
+		/// @param img The bit mask
+		/// @param count Number of times the algorithm should be used
+		/// @param size Size of the algorithm kernel
+		///
+		virtual void shrinkAlgorithm(CImg<bool> *img, const unsigned int count, const unsigned int size);
 
-		void pixelLabeling(CImg<bool> *img, int x, int y);
+		///
+		/// @brief Indexes and labels all pixels in a picture by comparing it with some of its neighbors.
+		/// @param img The bit mask
+		/// @param x X-coordinate of the current pixel
+		/// @param y Y-coordinate of the current pixel
+		///
+		virtual void pixelLabeling(CImg<bool> *img, int x, int y);
 
-		void deleteMinorRegions(CImg<bool> *img);
+		///
+		/// @brief Used for the region clearing. Deletes all but the biggest skin region in the bit mask.
+		/// @param img The bit mask
+		///
+		virtual void deleteMinorRegions(CImg<bool> *img);
 
 		// Member
 
+		///
+		/// @brief Used for the region clearing. Keeps track of the number of different regions in the bit mask.
+		///
 		unsigned int regionCount;
 
+		///
+		/// @brief Used for the region clearing. Label of the biggest region in the bit mask.
+		///
 		unsigned int biggestRegion;
 
+		///
+		/// @brief Used for the region clearing. An outer vector for each label. An inner vector for the coordinates of each pixel of one label.
+		///
 		std::vector< std::vector <Point2D> > labeledPixels;
 
+		///
+		/// @brief Used for the region clearing. A vector for each label which contains the number of pixels belonging to this label.
+		///
 		std::vector<unsigned int> regionSizes;
 
+		///
+		/// @brief Used for the region clearing. A temporary mask that contains the label of each pixel. 
+		///
 		CImg<unsigned int> labelMask;
 	};
 
@@ -237,7 +314,7 @@ namespace lime{
 
 		CImg<T> medianImg;
 
-		// Applying a median filter
+		// Applying a median filter if applyMedian = true
 		if (this->applyMedian)
 		{
 			medianImg = img.get_blur_median(this->medianSize);
@@ -247,11 +324,13 @@ namespace lime{
 			medianImg.assign(img);
 		}		
 
-		// Changing img to accept the new data with only 1 (binary) channel, in-place
+		// The bit mask should have the same width and height but only one channel and bool variables for each pixel
 		CImg<bool> *resImg = new CImg<bool>(_width,_height,1,1);
 
+		// Changes the color space of the image data from RGB to the target color space
 		CImg<double> *transformedImg = this->transformImage(medianImg);
 
+		// The 3 channels of the image data
 		double c1,c2,c3;
 
 		// Depending whether or not region clearing is active (which means that only the biggest region will remain at the end) some labeling is added to the loop
@@ -265,6 +344,7 @@ namespace lime{
 					c2 = (*transformedImg)(x,y,0,1);
 					c3 = (*transformedImg)(x,y,0,2);
 
+					// Uses the data from the skinThresholds method passing all 3 channels to it to determined whether the pixel is skin or not
 					(*resImg)(x,y,0,0) = this->skinThresholds(c1,c2,c3);
 				}
 			}
@@ -288,6 +368,8 @@ namespace lime{
 					c2 = (*transformedImg)(x,y,0,1);
 					c3 = (*transformedImg)(x,y,0,2);
 
+					// Uses the data from the skinThresholds method passing all 3 channels to it to determined whether the pixel is skin or not. Also if the pixel is a skin pixel
+					// the labeling method will be applied to it.
 					if (this->skinThresholds(c1,c2,c3))
 					{
 						(*resImg)(x,y,0,0) = true;
@@ -348,7 +430,7 @@ namespace lime{
 	{
 		for (unsigned int i = 0; i < count; i++ )
 		{
-			if (this->applyFixedGrowShrink)
+			if (this->applyGrowBeforeShrink)
 			{
 				this->growAlgorithm(img, 1, size);
 				this->shrinkAlgorithm(img, 1, size);
@@ -382,53 +464,58 @@ namespace lime{
 	template<typename T>
 	inline void lime::Algorithm<T>::pixelLabeling(CImg<bool> *img, int x, int y )
 	{
-		// Pixel not yet labeled
+		// Some setups if the current pixel is not yet labeled
 		if (this->labelMask(x,y,0,0) == 0)
 		{
+			// Gets a new label for that pixel
 			this->labelMask(x,y,0,0) = this->regionCount++;
 
+			// Stores the position data of the pixel to a new outer vector of labeledPixels
 			std::vector<Point2D> tempVect;
 			Point2D tempPoint= {x,y};
 			tempVect.push_back(tempPoint);
 			this->labeledPixels.push_back(tempVect);
+			// Stores the region size as a new entry to regionSizes
 			this->regionSizes.push_back(1);
 		}
 
 		// Compare labeling with the adjacent pixels (left-up, left, up, right-up)
 		for (int k = 0; k < 4; k++)
 		{
-			int tempX, tempY;
+			// Coordinates of the adjacent pixel that is being compared to the current pixel
+			int adjX, adjY;
 
 			switch (k)
 			{
-				case 0: tempX = x-1;
-						tempY = y-1;
+				case 0: adjX = x-1;
+						adjY = y-1;
 						break;
-				case 1: tempX = x-1;
-						tempY = y;
+				case 1: adjX = x-1;
+						adjY = y;
 						break;
-				case 2: tempX = x;
-						tempY = y-1;
+				case 2: adjX = x;
+						adjY = y-1;
 						break;
-				case 3: tempX = x+1;
-						tempY = y-1;
+				case 3: adjX = x+1;
+						adjY = y-1;
 						break;
 				default: break;
 			}
 
-			if (tempX < 0 || tempY < 0)
+			if (adjX < 0 || adjY < 0)
 			{
 				continue;
 			}
 
 			// If there is a skin pixel at the adjacent position
-			if ((*img)(tempX,tempY,0,0))
+			if ((*img)(adjX,adjY,0,0))
 			{
 				
-
-				unsigned int adjacentLabel = this->labelMask(tempX,tempY,0,0);
+				unsigned int adjacentLabel = this->labelMask(adjX,adjY,0,0);
 				unsigned int ownLabel = this->labelMask(x,y,0,0);
 
+				// Compares the two labels and if they are not equal determines which one is smaller in number
+				// Then the data of the bigger Label will be transferred to the smaller Label
 				if (adjacentLabel != ownLabel)
 				{
 					unsigned int smallerLabel;
@@ -445,10 +532,10 @@ namespace lime{
 						biggerLabel = adjacentLabel;
 					}
 
+					// Retrieves all the coordinates of the pixels of the bigger label
 					std::vector<Point2D> *positionVect = &(this->labeledPixels.at(biggerLabel));
 
-					// Change the labels to the new labels
-
+					// Changes the labels of the pixels of the bigger label to the new labels on the temporary label mask
 					for (unsigned int i = 0; i < positionVect->size();i++)
 					{
 						Point2D *posPoint = &(positionVect->at(i));
@@ -456,9 +543,11 @@ namespace lime{
 						this->labelMask(posPoint->x,posPoint->y,0,0) = smallerLabel;							
 					}
 
+					// Adjusts the new region sizes
 					this->regionSizes.at(smallerLabel) += this->regionSizes.at(biggerLabel);
 					this->regionSizes.at(biggerLabel) = 0;
 
+					// Transfers the pixel coordinates of the bigger label to the vector of the smaller label
 					for(unsigned int i = 0; i < positionVect->size();i++)
 					{
 						this->labeledPixels.at(smallerLabel).push_back(positionVect->at(i));
@@ -466,6 +555,7 @@ namespace lime{
 
 					this->labeledPixels.at(biggerLabel).clear();
 
+					// Determines if the smaller Label is now (after the fusion) the currently biggest region in the bit mask
 					if (this->regionSizes.at(smallerLabel) > this->regionSizes.at(this->biggestRegion))
 					{
 						this->biggestRegion = smallerLabel;
@@ -478,14 +568,16 @@ namespace lime{
 	template<typename T>
 	void lime::Algorithm<T>::deleteMinorRegions( CImg<bool> *img )
 	{
+		// Goes through the labelPixels vector which stores for each label an inner vector with all the coordinates of the pixels belonging to the label.
 		for (unsigned int i = 0; i < this->labeledPixels.size();i++)
 		{
-			// Region is biggest region or empty
+			// Continues if this region is the biggest region or completely empty
 			if (this->biggestRegion == i || this->regionSizes.at(i) == 0)
 			{
 				continue;
 			}
 
+			// Otherwise the coordinate informations are used to set all pixels in the bit mask to false
 			for (unsigned int j = 0; j < this->labeledPixels.at(i).size();j++)
 			{
 				Point2D *posPoint = &this->labeledPixels.at(i).at(j);

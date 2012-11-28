@@ -48,11 +48,15 @@ namespace lime{
 	///
 	/// @author  Aleander Schoch
 	/// @date    Nov 13, 2012 - First creation and implementation
+	/// @tparam T - Can be of any basic data type and should be the same as the one of the input image (e.g. double or char).
 	///
 	template<typename T> class ColorimetricHSIAlgorithm1: public Algorithm<T>{
 
 	public:
 
+		///
+		/// @brief The constructor that passes all arguments to the constructor of the base class
+		///
 		ColorimetricHSIAlgorithm1(bool _applyMedian = false, unsigned int _medianSize = 3, bool _applyGrow = false, unsigned int _growCount = 1, unsigned int _growSize = 2, bool _applyShrink = false,
 			unsigned int _shrinkCount = 1, unsigned int _shrinkSize = 2, bool _applyFixedGrowShrink = false, unsigned int _fixedGrowShrinkCount = 1,
 			unsigned int _fixedGrowShrinkSize = 2, bool _applyGrowBeforeShrink = true, bool _applyRegionClearing = false)
@@ -72,6 +76,10 @@ namespace lime{
 			this->s_higher_1 = 110.0/255.0;
 			this->s_higher_2 = 75.0/255.0;
 		}
+
+		///
+		/// @brief Basis destructor
+		///
 		virtual ~ColorimetricHSIAlgorithm1(){}
 
 		// Getter / Setter
@@ -101,14 +109,18 @@ namespace lime{
 
 		// virtual functions
 		
-		/** 
-		* @brief Transforms the image data from RGB to HSI color space
-		*/
+		///
+		/// @brief Transforms the image data from the RGB color space to the HSI color space.
+		///
 		virtual CImg<double>* transformImage(const CImg<T> &img);
 
-		/** 
-		* @brief Uses some thresholds to determine whether a pixel is skin or non-skin
-		*/
+		///
+		/// @brief Uses algorithm-specific thresholds in the HSI color space to determine whether a pixel is skin or non-skin.
+		/// @param c1 The first channel of the image data (here: H)
+		/// @param c2 The second channel of the image data (here: S)
+		/// @param c3 The third channel of the image data (here: I)
+		/// @return true = skin, false = no skin
+		///
 		virtual bool skinThresholds(double c1, double c2, double c3);
 
 		// Thresholds
