@@ -36,10 +36,17 @@ int main(int argc, char** argv)
 
 	CImg<int> *resImg = changeBinaryMaskToRGBImage(*testImg);
 
+	std::vector<BinarySeed> *skinSeeds = segm.retrieveSkinSeedsOfMask(*testImg, false, true, 2, 5);
+	std::vector<BinarySeed> *nonSkinSeeds = segm.retrieveNonSkinSeedsOfMask(*testImg, false, true, 2, 5);
+
+	addSeedsToRGBImage(resImg,skinSeeds,nonSkinSeeds);
+
 	resImg->save(destPath.c_str());
 
 	delete testImg;
 	delete resImg;
+	delete skinSeeds;
+	delete nonSkinSeeds;
 
     return 0;
 }

@@ -149,6 +149,16 @@ public:
 		return resImg;
 	}
 
+	inline std::vector<BinarySeed>* retrieveSkinSeedsOfMask(const CImg<bool> &mask, bool singleRegion = false, bool applyErosion = true, unsigned int erosionCount = 1, unsigned int erosionSize = 3)
+	{
+		return algorithm->getSeeds(true,singleRegion,mask,applyErosion,erosionCount,erosionSize);
+	}
+
+	inline std::vector<BinarySeed>* retrieveNonSkinSeedsOfMask(const CImg<bool> &mask, bool singleRegion = false, bool appyDilation = true, unsigned int dilationCount = 1, unsigned int dilationSize = 3)
+	{
+		return algorithm->getSeeds(false,singleRegion,mask,appyDilation,dilationCount,dilationSize);
+	}
+
 protected:
 
 	///

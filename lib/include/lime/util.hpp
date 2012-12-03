@@ -35,6 +35,7 @@
 #include <cmath>
 #include <memory>
 #include <vector>
+#include <queue>
 #include <stdint.h>
 #include <exception>
 #include <Eigen/Core>
@@ -45,6 +46,32 @@
 
 namespace lime
 {
+
+	struct BinarySeed
+	{
+	public:
+
+		BinarySeed(unsigned	int _x, unsigned int _y, bool _label):x(_x),y(_y),label(_label){}
+
+		unsigned int x;
+		unsigned int y;
+		bool label;
+	};
+
+	///
+	/// @struct Point2D
+	/// @brief This struct provides 2D coordinates in Cartesian space.
+	///
+	struct Point2D
+	{
+	public:
+
+		Point2D():x(0),y(0){}
+		Point2D(unsigned int _x, unsigned int _y):x(_x),y(_y){}
+
+		unsigned int x;
+		unsigned int y;
+	};
 
 ///
 /// @brief This function can be used to load an image from a file into a CImg object using the filepath
@@ -85,6 +112,31 @@ inline cimg_library::CImg<int>* changeBinaryMaskToRGBImage(cimg_library::CImg<bo
 	}
 
 	return resImg;
+}
+
+inline void addSeedsToRGBImage(cimg_library::CImg<int> *rgb, std::vector<BinarySeed> *skin, std::vector<BinarySeed> *nonSkin)
+{
+	for (int i = 0; i < skin->size(); i++)
+	{
+		BinarySeed seed = skin->at(i);
+		unsigned int x = seed.x;
+		unsigned int y = seed.y;
+
+		(*rgb)(x,y,0,0) = 255;
+		(*rgb)(x,y,0,1) = 0;
+		(*rgb)(x,y,0,2) = 0;
+	}
+
+	for (int i = 0; i < nonSkin->size(); i++)
+	{
+		BinarySeed seed = nonSkin->at(i);
+		unsigned int x = seed.x;
+		unsigned int y = seed.y;
+
+		(*rgb)(x,y,0,0) = 0;
+		(*rgb)(x,y,0,1) = 255;
+		(*rgb)(x,y,0,2) = 0;
+	}
 }
 
 ///

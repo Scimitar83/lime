@@ -52,18 +52,6 @@ namespace lime{
 	///
 	typedef double Threshold;
 
-	///
-	/// @struct Point2D
-	/// @brief This struct provides 2D coordinates in Cartesian space.
-	///
-	struct Point2D
-	{
-	public:
-		unsigned int x;
-		unsigned int y;
-	};
-
-
 #ifndef DOXYGEN_SHOULD_SKIP_THIS // This template forward declaration produces some problems in combination with doxygen so I disables doxygen for it
 
 	template<typename U> class Segmentation;
@@ -277,6 +265,8 @@ namespace lime{
 		///
 		virtual void deleteMinorRegions(CImg<bool> *img);
 
+		virtual std::vector<BinarySeed>* getSeeds(bool skin, bool singleRegion, const CImg<bool> &mask, bool applyRegionChange, unsigned int regionChangeCount, unsigned int regionChangeSize);
+
 		// Member
 
 		///
@@ -472,7 +462,7 @@ namespace lime{
 
 			// Stores the position data of the pixel to a new outer vector of labeledPixels
 			std::vector<Point2D> tempVect;
-			Point2D tempPoint= {x,y};
+			Point2D tempPoint(x,y);
 			tempVect.push_back(tempPoint);
 			this->labeledPixels.push_back(tempVect);
 			// Stores the region size as a new entry to regionSizes
@@ -487,19 +477,19 @@ namespace lime{
 
 			switch (k)
 			{
-				case 0: adjX = x-1;
-						adjY = y-1;
-						break;
-				case 1: adjX = x-1;
-						adjY = y;
-						break;
-				case 2: adjX = x;
-						adjY = y-1;
-						break;
-				case 3: adjX = x+1;
-						adjY = y-1;
-						break;
-				default: break;
+			case 0: adjX = x-1;
+				adjY = y-1;
+				break;
+			case 1: adjX = x-1;
+				adjY = y;
+				break;
+			case 2: adjX = x;
+				adjY = y-1;
+				break;
+			case 3: adjX = x+1;
+				adjY = y-1;
+				break;
+			default: break;
 			}
 
 			if (adjX < 0 || adjY < 0)
@@ -510,7 +500,7 @@ namespace lime{
 			// If there is a skin pixel at the adjacent position
 			if ((*img)(adjX,adjY,0,0))
 			{
-				
+
 				unsigned int adjacentLabel = this->labelMask(adjX,adjY,0,0);
 				unsigned int ownLabel = this->labelMask(x,y,0,0);
 
@@ -587,4 +577,157 @@ namespace lime{
 		}
 	}
 
+	template<typename T>
+	std::vector<BinarySeed>* lime::Algorithm<T>::getSeeds( bool skin, bool singleRegion, const CImg<bool> &mask, bool applyRegionChange, unsigned int regionChangeCount, unsigned int regionChangeSize )
+	{
+		std::vector<BinarySeed> *resVector = new std::vector<BinarySeed>;
+		CImg<bool> workMask(mask);
+
+		// Pre-Processing of the data of the mask
+		if (applyRegionChange)
+		{
+			if (skin)
+			{
+				this->shrinkAlgorithm(&workMask, regionChangeCount,regionChangeSize);
+			}
+			else
+			{
+				this->growAlgorithm(&workMask, regionChangeCount,regionChangeSize);
+			}
+		}
+
+		//Processing part
+
+		CImg<bool> visitedMask(workMask, false);
+		std::queue<Point2D> workQueue;
+
+		unsigned int width = workMask.width();
+		unsigned int height = workMask.height();
+
+		bool initPixel = false;
+
+		CImg_3x3(I, bool);
+		cimg_for3x3(workMask, x, y, 0, 0, I, bool)
+		{
+			if (initPixel && singleRegion)
+			{
+				goto singleRegionJump;
+			}
+
+			if (skin)
+			{
+				if (Icc && !(Ipp & Icp & Inp & Ipc & Inc & Ipn & Icn & Inn))
+				{
+					BinarySeed seed(x,y,true);
+					resVector->push_back(seed);
+
+					if (singleRegion)
+					{
+						workQueue.push(Point2D(x,y));
+						visitedMask(x,y,0,0) = true;
+						initPixel = true;
+					}
+				}
+			}
+			else
+			{
+				if (!Icc && (Ipp | Icp | Inp | Ipc | Inc | Ipn | Icn | Inn))
+				{
+					BinarySeed seed(x,y,true);
+					resVector->push_back(seed);
+
+					if (singleRegion)
+					{
+						workQueue.push(Point2D(x,y));
+						visitedMask(x,y,0,0) = true;
+						initPixel = true;
+					}
+				}
+			}
+		}
+
+		// for the single Region a search over the neighbor pixels is performed
+		singleRegionJump: if (singleRegion && initPixel)
+		{
+
+			while (!workQueue.empty())
+			{
+				Point2D seed = workQueue.front();
+				workQueue.pop();
+
+				unsigned int x = seed.x;
+				unsigned int y = seed.y;
+
+				bool Ipp = workMask.atXY(x-1,y-1,0,0);
+				bool Icp = workMask.atXY(x,y-1,0,0);
+				bool Inp = workMask.atXY(x+1,y-1,0,0);
+				bool Ipc = workMask.atXY(x-1,y,0,0);
+				bool Icc = workMask(x,y,0,0);
+				bool Inc = workMask.atXY(x+1,y,0,0);
+				bool Ipn = workMask.atXY(x-1,y+1,0,0);
+				bool Icn = workMask.atXY(x,y+1,0,0);
+				bool Inn = workMask.atXY(x+1,y+1,0,0);
+
+				bool neighborsBool[8] = {Ipp, Icp, Inp, Ipc, Inc, Ipn, Icn, Inn};
+				Point2D neighborCoordinates[8] = {Point2D(x-1,y-1), Point2D(x,y-1), Point2D(x+1,y-1), Point2D(x-1,y), Point2D(x+1,y), Point2D(x-1,y+1), Point2D(x,y+1), Point2D(x+1,y+1)};
+
+				bool suitablePixel = false;
+
+				if (!initPixel)
+				{
+					// Decide if the Pixel is a border pixel
+					if (skin)
+					{
+						if (Icc && !(Ipp & Icp & Inp & Ipc & Inc & Ipn & Icn & Inn))
+						{
+							BinarySeed seed(x,y,true);
+							resVector->push_back(seed);
+							visitedMask(x,y,0,0) = true;
+							suitablePixel = true;
+						}
+					}
+					else
+					{
+						if (!Icc && (Ipp | Icp | Inp | Ipc | Inc | Ipn | Icn | Inn))
+						{
+							BinarySeed seed(x,y,false);
+							resVector->push_back(seed);
+							visitedMask(x,y,0,0) = true;
+							suitablePixel = true;
+						}
+					}
+				}
+				else
+				{
+					initPixel = false;
+					suitablePixel = true;
+				}
+
+				// If the current Pixel is a border pixel add all surrounding border pixel candidates
+				if (suitablePixel)
+				{
+					for (int i = 0; i < 8; i++)
+					{
+						unsigned int tempX = neighborCoordinates[i].x;
+						unsigned int tempY = neighborCoordinates[i].y;
+
+						// If the coordinates are outside of the image
+						if (tempX < 0 || tempY < 0 || tempX >= width || tempY >= height)
+						{
+							continue;
+						}
+
+						// If the neighbor pixel is the same as the skin bool and not visited yet add it
+						if (neighborsBool[i] == skin && !visitedMask(tempX,tempY,0,0))
+						{
+							workQueue.push(neighborCoordinates[i]);
+						}
+					}
+				}
+			}
+		}
+
+
+		return resVector;
+	}
 }
