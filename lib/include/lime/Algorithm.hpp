@@ -265,6 +265,15 @@ namespace lime{
 		///
 		virtual void deleteMinorRegions(CImg<bool> *img);
 
+		///
+		/// @brief Uses a bit mask to automatically determine seed points for skin and non-skin pixels
+		/// @param skin True if skin seed pixels should be retrieved, false if non-skin seed pixels should be retrieved 
+		/// @singleRegion Only determines seed pixels on the border of the first region that is being detected
+		/// @mask The bit mask
+		/// @applyRegionChange True if a shrink or grow (based on skin / non-skin) algorithm should be used prior to the seed pixel detection
+		/// @regionChangeCount Number of times the shrink / grow algorithm should be used
+		/// @regionChangeSize Size of the kernel for the shrink / grow algorithm
+		///
 		virtual std::vector<BinarySeed>* getSeeds(bool skin, bool singleRegion, const CImg<bool> &mask, bool applyRegionChange, unsigned int regionChangeCount, unsigned int regionChangeSize);
 
 		// Member
@@ -581,41 +590,44 @@ namespace lime{
 	std::vector<BinarySeed>* lime::Algorithm<T>::getSeeds( bool skin, bool singleRegion, const CImg<bool> &mask, bool applyRegionChange, unsigned int regionChangeCount, unsigned int regionChangeSize )
 	{
 		std::vector<BinarySeed> *resVector = new std::vector<BinarySeed>;
-		CImg<bool> workMask(mask);
+		CImg<bool> maskCopy(mask);
 
-		// Pre-Processing of the data of the mask
+		// Pre-Processing of the data of the mask (grow or shrink algorithm)
 		if (applyRegionChange)
 		{
 			if (skin)
 			{
-				this->shrinkAlgorithm(&workMask, regionChangeCount,regionChangeSize);
+				this->shrinkAlgorithm(&maskCopy, regionChangeCount,regionChangeSize);
 			}
 			else
 			{
-				this->growAlgorithm(&workMask, regionChangeCount,regionChangeSize);
+				this->growAlgorithm(&maskCopy, regionChangeCount,regionChangeSize);
 			}
 		}
 
 		//Processing part
 
-		CImg<bool> visitedMask(workMask, false);
-		std::queue<Point2D> workQueue;
+		CImg<bool> visitedMask(maskCopy.width(),maskCopy.height(),1,1, false); // tracks which pixels were visited if the singleRegion algorithm is used
+		std::queue<Point2D> pixelQueue; // Queue of the pixels that should be evaluated next if the singleRegion algorithm is used
 
-		unsigned int width = workMask.width();
-		unsigned int height = workMask.height();
+		unsigned int width = maskCopy.width();
+		unsigned int height = maskCopy.height();
 
-		bool initPixel = false;
+		bool initPixel = false; // Only important if the singleRegion algorithm is used. True when a first suitable pixel has been detected
 
+		// Loops through all pixels (if singleRegion isn't used) or just until the first suitable pixel has been detected (singleRegion algorithm)
 		CImg_3x3(I, bool);
-		cimg_for3x3(workMask, x, y, 0, 0, I, bool)
+		cimg_for3x3(maskCopy, x, y, 0, 0, I, bool) 
 		{
 			if (initPixel && singleRegion)
 			{
+				// If the first suitable pixel has been detected (singleRegion algorithm) the loop will be canceled
 				goto singleRegionJump;
 			}
 
 			if (skin)
 			{
+				// True if the center pixel is a skin pixel and one of the neighbor pixels is non-skin
 				if (Icc && !(Ipp & Icp & Inp & Ipc & Inc & Ipn & Icn & Inn))
 				{
 					BinarySeed seed(x,y,true);
@@ -623,7 +635,7 @@ namespace lime{
 
 					if (singleRegion)
 					{
-						workQueue.push(Point2D(x,y));
+						pixelQueue.push(Point2D(x,y));
 						visitedMask(x,y,0,0) = true;
 						initPixel = true;
 					}
@@ -631,6 +643,7 @@ namespace lime{
 			}
 			else
 			{
+				// True if the center pixel is a non-skin pixel and one of the neighbor pixels is skin
 				if (!Icc && (Ipp | Icp | Inp | Ipc | Inc | Ipn | Icn | Inn))
 				{
 					BinarySeed seed(x,y,true);
@@ -638,7 +651,7 @@ namespace lime{
 
 					if (singleRegion)
 					{
-						workQueue.push(Point2D(x,y));
+						pixelQueue.push(Point2D(x,y));
 						visitedMask(x,y,0,0) = true;
 						initPixel = true;
 					}
@@ -647,87 +660,102 @@ namespace lime{
 		}
 
 		// for the single Region a search over the neighbor pixels is performed
-		singleRegionJump: if (singleRegion && initPixel)
-		{
+singleRegionJump: if (singleRegion && initPixel)
+				  {
+					  Point2D point;
+					  unsigned int x;
+					  unsigned int y;
 
-			while (!workQueue.empty())
-			{
-				Point2D seed = workQueue.front();
-				workQueue.pop();
+					  // Loops while there is still a pixel in the queue that has to be evaluated
+					  while (!pixelQueue.empty())
+					  {
+						  point = pixelQueue.front();
+						  pixelQueue.pop();
 
-				unsigned int x = seed.x;
-				unsigned int y = seed.y;
+						  x = point.x;
+						  y = point.y;
 
-				bool Ipp = workMask.atXY(x-1,y-1,0,0);
-				bool Icp = workMask.atXY(x,y-1,0,0);
-				bool Inp = workMask.atXY(x+1,y-1,0,0);
-				bool Ipc = workMask.atXY(x-1,y,0,0);
-				bool Icc = workMask(x,y,0,0);
-				bool Inc = workMask.atXY(x+1,y,0,0);
-				bool Ipn = workMask.atXY(x-1,y+1,0,0);
-				bool Icn = workMask.atXY(x,y+1,0,0);
-				bool Inn = workMask.atXY(x+1,y+1,0,0);
+						  // Pixel has been visited
+						  bool test1 = visitedMask(x,y,0,0);
 
-				bool neighborsBool[8] = {Ipp, Icp, Inp, Ipc, Inc, Ipn, Icn, Inn};
-				Point2D neighborCoordinates[8] = {Point2D(x-1,y-1), Point2D(x,y-1), Point2D(x+1,y-1), Point2D(x-1,y), Point2D(x+1,y), Point2D(x-1,y+1), Point2D(x,y+1), Point2D(x+1,y+1)};
+						  // 8-neighborhood pixels
+						  bool Ipp = maskCopy.atXY(x-1,y-1,0,0);
+						  bool Icp = maskCopy.atXY(x,y-1,0,0);
+						  bool Inp = maskCopy.atXY(x+1,y-1,0,0);
+						  bool Ipc = maskCopy.atXY(x-1,y,0,0);
+						  bool Icc = maskCopy(x,y,0,0);
+						  bool Inc = maskCopy.atXY(x+1,y,0,0);
+						  bool Ipn = maskCopy.atXY(x-1,y+1,0,0);
+						  bool Icn = maskCopy.atXY(x,y+1,0,0);
+						  bool Inn = maskCopy.atXY(x+1,y+1,0,0);
 
-				bool suitablePixel = false;
+						  bool neighborsBool[8] = {Ipp, Icp, Inp, Ipc, Inc, Ipn, Icn, Inn};
+						  Point2D neighborCoordinates[8] = {Point2D(x-1,y-1), Point2D(x,y-1), Point2D(x+1,y-1), Point2D(x-1,y), Point2D(x+1,y), Point2D(x-1,y+1), Point2D(x,y+1), Point2D(x+1,y+1)};
 
-				if (!initPixel)
-				{
-					// Decide if the Pixel is a border pixel
-					if (skin)
-					{
-						if (Icc && !(Ipp & Icp & Inp & Ipc & Inc & Ipn & Icn & Inn))
-						{
-							BinarySeed seed(x,y,true);
-							resVector->push_back(seed);
-							visitedMask(x,y,0,0) = true;
-							suitablePixel = true;
-						}
-					}
-					else
-					{
-						if (!Icc && (Ipp | Icp | Inp | Ipc | Inc | Ipn | Icn | Inn))
-						{
-							BinarySeed seed(x,y,false);
-							resVector->push_back(seed);
-							visitedMask(x,y,0,0) = true;
-							suitablePixel = true;
-						}
-					}
-				}
-				else
-				{
-					initPixel = false;
-					suitablePixel = true;
-				}
+						  // Determines if the current pixel is a seed pixel (skin or non-skin) or not
+						  bool suitablePixel = false;
 
-				// If the current Pixel is a border pixel add all surrounding border pixel candidates
-				if (suitablePixel)
-				{
-					for (int i = 0; i < 8; i++)
-					{
-						unsigned int tempX = neighborCoordinates[i].x;
-						unsigned int tempY = neighborCoordinates[i].y;
+						  // If the current pixel is the very first one skip this part
+						  if (!initPixel)
+						  {
+							  // Decide if the Pixel is a border / seed pixel
+							  if (skin)
+							  {
+								  // True if the center pixel is a skin pixel and one of the neighbor pixels is non-skin
+								  if (Icc && !(Ipp & Icp & Inp & Ipc & Inc & Ipn & Icn & Inn))
+								  {
+									  BinarySeed seed(x,y,true);
+									  resVector->push_back(seed);
+									  suitablePixel = true;
+								  }
+							  }
+							  else
+							  {
+								  // True if the center pixel is a non-skin pixel and one of the neighbor pixels is skin
+								  if (!Icc && (Ipp | Icp | Inp | Ipc | Inc | Ipn | Icn | Inn))
+								  {
+									  BinarySeed seed(x,y,false);
+									  resVector->push_back(seed);
+									  suitablePixel = true;
+								  }
+							  }
+						  }
+						  else
+						  {
+							  initPixel = false;
+							  suitablePixel = true;
+						  }
 
-						// If the coordinates are outside of the image
-						if (tempX < 0 || tempY < 0 || tempX >= width || tempY >= height)
-						{
-							continue;
-						}
+						  // If the current Pixel is a seed pixel add all surrounding seed pixel candidates to the Queue
+						  if (suitablePixel)
+						  {
+							  for (int i = 0; i < 8; i++)
+							  {
+								  unsigned int tempX = neighborCoordinates[i].x;
+								  unsigned int tempY = neighborCoordinates[i].y;
 
-						// If the neighbor pixel is the same as the skin bool and not visited yet add it
-						if (neighborsBool[i] == skin && !visitedMask(tempX,tempY,0,0))
-						{
-							workQueue.push(neighborCoordinates[i]);
-						}
-					}
-				}
-			}
-		}
+								  // If the coordinates are outside of the image skip
+								  if (tempX < 0 || tempY < 0 || tempX >= width || tempY >= height)
+								  {
+									  continue;
+								  }
+
+								  // If the neighbor pixel is the same as the skin bool and not visited yet add it to the Queue
+								  if (!visitedMask(tempX,tempY,0,0))
+								  {
+									  bool test1 = (neighborsBool[i] == skin);
+									  if (neighborsBool[i] == skin)
+									  {
+										  visitedMask(tempX,tempY,0,0) = true;
+										  pixelQueue.push(neighborCoordinates[i]);
+									  }
+								  }
+							  }
+						  }
+					  }
+				  }
 
 
-		return resVector;
+				  return resVector;
 	}
 }

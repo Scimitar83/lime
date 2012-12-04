@@ -149,11 +149,27 @@ public:
 		return resImg;
 	}
 
+	///
+	/// @brief Uses a bit mask to automatically determine seed points for skin pixels
+	/// @mask The bit mask
+	/// @singleRegion Only determines seed pixels on the border of the first region that is being detected
+	/// @applyErosion True if a shrink algorithm should be used prior to the seed pixel detection
+	/// @erosionCount Number of times the shrink algorithm should be used
+	/// @erosionSize Size of the kernel for the shrink algorithm
+	///
 	inline std::vector<BinarySeed>* retrieveSkinSeedsOfMask(const CImg<bool> &mask, bool singleRegion = false, bool applyErosion = true, unsigned int erosionCount = 1, unsigned int erosionSize = 3)
 	{
 		return algorithm->getSeeds(true,singleRegion,mask,applyErosion,erosionCount,erosionSize);
 	}
 
+	///
+	/// @brief Uses a bit mask to automatically determine seed points for non-skin pixels
+	/// @mask The bit mask
+	/// @singleRegion Only determines seed pixels on the border of the first region that is being detected
+	/// @applyDilation True if a grow algorithm should be used prior to the seed pixel detection
+	/// @dilationCount Number of times the grow algorithm should be used
+	/// @dilationSize Size of the kernel for the grow algorithm
+	///
 	inline std::vector<BinarySeed>* retrieveNonSkinSeedsOfMask(const CImg<bool> &mask, bool singleRegion = false, bool appyDilation = true, unsigned int dilationCount = 1, unsigned int dilationSize = 3)
 	{
 		return algorithm->getSeeds(false,singleRegion,mask,appyDilation,dilationCount,dilationSize);

@@ -114,9 +114,15 @@ inline cimg_library::CImg<int>* changeBinaryMaskToRGBImage(cimg_library::CImg<bo
 	return resImg;
 }
 
+///
+/// @brief This function can be used to visualize skin and non-skin pixels by colouring the corresponding pixels in a rgb image (skin = red, non-skin = green)
+/// @rgb A pointer to the rgb image
+/// @skin A pointer to the vector with the skin pixels
+/// @nonSkin A pointer to the vector with the non-skin pixels
+///
 inline void addSeedsToRGBImage(cimg_library::CImg<int> *rgb, std::vector<BinarySeed> *skin, std::vector<BinarySeed> *nonSkin)
 {
-	for (int i = 0; i < skin->size(); i++)
+	for (unsigned int i = 0; i < skin->size(); i++)
 	{
 		BinarySeed seed = skin->at(i);
 		unsigned int x = seed.x;
@@ -127,7 +133,7 @@ inline void addSeedsToRGBImage(cimg_library::CImg<int> *rgb, std::vector<BinaryS
 		(*rgb)(x,y,0,2) = 0;
 	}
 
-	for (int i = 0; i < nonSkin->size(); i++)
+	for (unsigned int i = 0; i < nonSkin->size(); i++)
 	{
 		BinarySeed seed = nonSkin->at(i);
 		unsigned int x = seed.x;
