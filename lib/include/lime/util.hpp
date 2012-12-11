@@ -47,6 +47,10 @@
 namespace lime
 {
 
+	///
+	/// @struct BinarySeed
+	/// @brief This struct provides 2D coordinates of a seed point in cartesianspace together with a label if the seed is skin (label == true) or non-skin (label == false)
+	///
 	struct BinarySeed
 	{
 	public:
@@ -143,6 +147,30 @@ inline void addSeedsToRGBImage(cimg_library::CImg<int> *rgb, std::vector<BinaryS
 		(*rgb)(x,y,0,1) = 255;
 		(*rgb)(x,y,0,2) = 0;
 	}
+}
+
+inline cimg_library::CImg<unsigned char>* distanceMapToGreyscale(cimg_library::CImg<int> *map)
+{
+	cimg_library::CImg<unsigned char> *res = new cimg_library::CImg<unsigned char>(map->width(),map->height(),1,1, (unsigned char)0);
+
+	int maximum = map->max();
+	int minimum = map->min();
+
+	cimg_forXY(*map,x,y){
+
+		int val = (*map)(x,y,0,0);
+
+		if ( val >= 0)
+		{
+			(*res)(x,y,0,0) = (val *127/maximum + 128); 
+		}
+		else
+		{
+			(*res)(x,y,0,0) = 128 - (val *128/minimum + 128); 
+		}
+	}
+
+	return res;
 }
 
 ///

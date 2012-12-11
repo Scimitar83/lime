@@ -175,6 +175,11 @@ public:
 		return algorithm->getSeeds(false,singleRegion,mask,appyDilation,dilationCount,dilationSize);
 	}
 
+	inline CImg<int>* retrieveDistanceMapOfMask(CImg<bool> &mask, bool singleRegion = false)
+	{
+		return algorithm->getDistanceMapOfMask(mask,singleRegion);
+	}
+
 protected:
 
 	///

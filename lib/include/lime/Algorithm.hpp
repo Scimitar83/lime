@@ -37,6 +37,8 @@
 #include <lime/util.hpp>
 #include <CImg.h>
 #include <cmath>
+#include <opencv2/opencv.hpp>
+#include <opencv2/flann/flann.hpp>
 
 using namespace cimg_library;
 
@@ -51,6 +53,8 @@ namespace lime{
 	/// @brief Simple typedef that defines a Threshold as a floating point variable.
 	///
 	typedef double Threshold;
+
+	typedef cv::flann::GenericIndex<cv::flann::L2_Simple<double> > SearchTree;
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS // This template forward declaration produces some problems in combination with doxygen so I disables doxygen for it
 
@@ -157,6 +161,8 @@ namespace lime{
 		/// @return true = skin, false = no skin
 		///
 		virtual bool skinThresholds(double c1, double c2, double c3) = 0;
+
+		virtual CImg<int>* getDistanceMapOfMask(CImg<bool> &mask, bool singleRegion = false);
 
 		// Variables
 
@@ -275,6 +281,8 @@ namespace lime{
 		/// @regionChangeSize Size of the kernel for the shrink / grow algorithm
 		///
 		virtual std::vector<BinarySeed>* getSeeds(bool skin, bool singleRegion, const CImg<bool> &mask, bool applyRegionChange, unsigned int regionChangeCount, unsigned int regionChangeSize);
+
+		virtual cv::Mat_<double> findDistances(SearchTree& st, const cv::Mat_<double>& queryPoints);
 
 		// Member
 
@@ -660,102 +668,229 @@ namespace lime{
 		}
 
 		// for the single Region a search over the neighbor pixels is performed
-singleRegionJump: if (singleRegion && initPixel)
-				  {
-					  Point2D point;
-					  unsigned int x;
-					  unsigned int y;
+singleRegionJump: 
+		if (singleRegion && initPixel)
+		{
+			Point2D point;
+			unsigned int x;
+			unsigned int y;
 
-					  // Loops while there is still a pixel in the queue that has to be evaluated
-					  while (!pixelQueue.empty())
-					  {
-						  point = pixelQueue.front();
-						  pixelQueue.pop();
+			// Loops while there is still a pixel in the queue that has to be evaluated
+			while (!pixelQueue.empty())
+			{
+				point = pixelQueue.front();
+				pixelQueue.pop();
 
-						  x = point.x;
-						  y = point.y;
+				x = point.x;
+				y = point.y;
 
-						  // Pixel has been visited
-						  bool test1 = visitedMask(x,y,0,0);
+				// Pixel has been visited
+				bool test1 = visitedMask(x,y,0,0);
 
-						  // 8-neighborhood pixels
-						  bool Ipp = maskCopy.atXY(x-1,y-1,0,0);
-						  bool Icp = maskCopy.atXY(x,y-1,0,0);
-						  bool Inp = maskCopy.atXY(x+1,y-1,0,0);
-						  bool Ipc = maskCopy.atXY(x-1,y,0,0);
-						  bool Icc = maskCopy(x,y,0,0);
-						  bool Inc = maskCopy.atXY(x+1,y,0,0);
-						  bool Ipn = maskCopy.atXY(x-1,y+1,0,0);
-						  bool Icn = maskCopy.atXY(x,y+1,0,0);
-						  bool Inn = maskCopy.atXY(x+1,y+1,0,0);
+				// 8-neighborhood pixels
+				bool Ipp = maskCopy.atXY(x-1,y-1,0,0);
+				bool Icp = maskCopy.atXY(x,y-1,0,0);
+				bool Inp = maskCopy.atXY(x+1,y-1,0,0);
+				bool Ipc = maskCopy.atXY(x-1,y,0,0);
+				bool Icc = maskCopy(x,y,0,0);
+				bool Inc = maskCopy.atXY(x+1,y,0,0);
+				bool Ipn = maskCopy.atXY(x-1,y+1,0,0);
+				bool Icn = maskCopy.atXY(x,y+1,0,0);
+				bool Inn = maskCopy.atXY(x+1,y+1,0,0);
 
-						  bool neighborsBool[8] = {Ipp, Icp, Inp, Ipc, Inc, Ipn, Icn, Inn};
-						  Point2D neighborCoordinates[8] = {Point2D(x-1,y-1), Point2D(x,y-1), Point2D(x+1,y-1), Point2D(x-1,y), Point2D(x+1,y), Point2D(x-1,y+1), Point2D(x,y+1), Point2D(x+1,y+1)};
+				bool neighborsBool[8] = {Ipp, Icp, Inp, Ipc, Inc, Ipn, Icn, Inn};
+				Point2D neighborCoordinates[8] = {Point2D(x-1,y-1), Point2D(x,y-1), Point2D(x+1,y-1), Point2D(x-1,y), Point2D(x+1,y), Point2D(x-1,y+1), Point2D(x,y+1), Point2D(x+1,y+1)};
 
-						  // Determines if the current pixel is a seed pixel (skin or non-skin) or not
-						  bool suitablePixel = false;
+				// Determines if the current pixel is a seed pixel (skin or non-skin) or not
+				bool suitablePixel = false;
 
-						  // If the current pixel is the very first one skip this part
-						  if (!initPixel)
-						  {
-							  // Decide if the Pixel is a border / seed pixel
-							  if (skin)
-							  {
-								  // True if the center pixel is a skin pixel and one of the neighbor pixels is non-skin
-								  if (Icc && !(Ipp & Icp & Inp & Ipc & Inc & Ipn & Icn & Inn))
-								  {
-									  BinarySeed seed(x,y,true);
-									  resVector->push_back(seed);
-									  suitablePixel = true;
-								  }
-							  }
-							  else
-							  {
-								  // True if the center pixel is a non-skin pixel and one of the neighbor pixels is skin
-								  if (!Icc && (Ipp | Icp | Inp | Ipc | Inc | Ipn | Icn | Inn))
-								  {
-									  BinarySeed seed(x,y,false);
-									  resVector->push_back(seed);
-									  suitablePixel = true;
-								  }
-							  }
-						  }
-						  else
-						  {
-							  initPixel = false;
-							  suitablePixel = true;
-						  }
+				// If the current pixel is the very first one skip this part
+				if (!initPixel)
+				{
+					// Decide if the Pixel is a border / seed pixel
+					if (skin)
+					{
+						// True if the center pixel is a skin pixel and one of the neighbor pixels is non-skin
+						if (Icc && !(Ipp & Icp & Inp & Ipc & Inc & Ipn & Icn & Inn))
+						{
+							BinarySeed seed(x,y,true);
+							resVector->push_back(seed);
+							suitablePixel = true;
+						}
+					}
+					else
+					{
+						// True if the center pixel is a non-skin pixel and one of the neighbor pixels is skin
+						if (!Icc && (Ipp | Icp | Inp | Ipc | Inc | Ipn | Icn | Inn))
+						{
+							BinarySeed seed(x,y,false);
+							resVector->push_back(seed);
+							suitablePixel = true;
+						}
+					}
+				}
+				else
+				{
+					initPixel = false;
+					suitablePixel = true;
+				}
 
-						  // If the current Pixel is a seed pixel add all surrounding seed pixel candidates to the Queue
-						  if (suitablePixel)
-						  {
-							  for (int i = 0; i < 8; i++)
-							  {
-								  unsigned int tempX = neighborCoordinates[i].x;
-								  unsigned int tempY = neighborCoordinates[i].y;
+				// If the current Pixel is a seed pixel add all surrounding seed pixel candidates to the Queue
+				if (suitablePixel)
+				{
+					for (int i = 0; i < 8; i++)
+					{
+						unsigned int tempX = neighborCoordinates[i].x;
+						unsigned int tempY = neighborCoordinates[i].y;
 
-								  // If the coordinates are outside of the image skip
-								  if (tempX < 0 || tempY < 0 || tempX >= width || tempY >= height)
-								  {
-									  continue;
-								  }
+						// If the coordinates are outside of the image skip
+						if (tempX < 0 || tempY < 0 || tempX >= width || tempY >= height)
+						{
+							continue;
+						}
 
-								  // If the neighbor pixel is the same as the skin bool and not visited yet add it to the Queue
-								  if (!visitedMask(tempX,tempY,0,0))
-								  {
-									  bool test1 = (neighborsBool[i] == skin);
-									  if (neighborsBool[i] == skin)
-									  {
-										  visitedMask(tempX,tempY,0,0) = true;
-										  pixelQueue.push(neighborCoordinates[i]);
-									  }
-								  }
-							  }
-						  }
-					  }
-				  }
+						// If the neighbor pixel is the same as the skin bool and not visited yet add it to the Queue
+						if (!visitedMask(tempX,tempY,0,0))
+						{
+							bool test1 = (neighborsBool[i] == skin);
+							if (neighborsBool[i] == skin)
+							{
+								visitedMask(tempX,tempY,0,0) = true;
+								pixelQueue.push(neighborCoordinates[i]);
+							}
+						}
+					}
+				}
+			}
+		}
 
 
-				  return resVector;
+		return resVector;
 	}
+
+	template<typename T>
+	CImg<int>* lime::Algorithm<T>::getDistanceMapOfMask( CImg<bool> &mask, bool singleRegion )
+	{
+
+		CImg<bool> maskCopy(mask);
+
+		// Phase 1: Sorting the pixels into three different categories (seed, internal, external)
+		std::vector<BinarySeed> seeds;
+
+		std::vector<Point2D> internal;
+
+		std::vector<Point2D> external;
+
+		// Deletes all minor regions if just a single region should be detected
+		if (singleRegion)
+		{
+			deleteMinorRegions(&maskCopy);
+		}
+
+		unsigned int width = maskCopy.width();
+		unsigned int height = maskCopy.height();
+
+		// Loops through all pixels
+		CImg_3x3(I, bool);
+		cimg_for3x3(maskCopy, x, y, 0, 0, I, bool) 
+		{
+
+			if (Icc)
+			{
+				// True if the center pixel is a skin pixel and one of the neighbor pixels is non-skin
+				if (!(Ipp & Icp & Inp & Ipc & Inc & Ipn & Icn & Inn))
+				{
+					BinarySeed seed(x,y,true);
+					seeds.push_back(seed);
+				} 
+				else // Center pixel and all surrounding pixels are skin
+				{
+					internal.push_back(Point2D(x,y));
+				}
+			}
+			else // Center pixel is a non-skin pixel
+			{
+				external.push_back(Point2D(x,y));
+			}
+		}
+
+		// Phase 2: Preparation for the FLANN search algorithm
+
+		unsigned int numb_seeds = seeds.size();
+		unsigned int numb_int = internal.size();
+		unsigned int numb_ext = internal.size();
+
+		cv::Mat_<double> contourPoints(numb_seeds,2);
+		cv::Mat_<double> internalPoints(numb_int,2);
+		cv::Mat_<double> externalPoints(numb_ext,2);
+
+		// Matrices getting filled
+
+		for (unsigned int i = 0; i < seeds.size();i++)
+		{
+			contourPoints[i][0] = seeds[i].x;
+			contourPoints[i][1] = seeds[i].y;
+		}
+
+		for (unsigned int i = 0; i < internal.size();i++)
+		{
+			internalPoints[i][0] = internal[i].x;
+			internalPoints[i][1] = internal[i].y;
+		}
+
+		for (unsigned int i = 0; i < external.size();i++)
+		{
+			externalPoints[i][0] = external[i].x;
+			externalPoints[i][1] = external[i].y;
+		}
+
+		// Initialization of the search tree
+
+		SearchTree st(contourPoints,cvflann::KDTreeIndexParams(5));
+
+		// Phase 3: Retrieving the distances
+
+		cv::Mat_<double> internalDistances = this->findDistances(st,internalPoints);
+		cv::Mat_<double> externalDistances = this->findDistances(st, externalPoints);
+
+		// Phase 4: Construction of the distance Map
+
+		CImg<int> *map = new CImg<int>(maskCopy.width(),maskCopy.height(),1,1,(int)0);
+
+		for (unsigned int i = 0; i < internal.size();i++)
+		{
+			unsigned int x = internal[i].x;
+			unsigned int y = internal[i].y;
+
+			int dist = static_cast<unsigned int>(*internalDistances[i]) * (-1);
+
+			(*map)(x,y,0,0) = dist;
+		}
+
+		for (unsigned int i = 0; i < external.size();i++)
+		{
+			unsigned int x = external[i].x;
+			unsigned int y = external[i].y;
+
+			int dist = *externalDistances[i];
+
+			(*map)(x,y,0,0) = dist;
+		}
+
+		return map;
+	}
+	template<typename T>
+	cv::Mat_<double> lime::Algorithm<T>::findDistances(SearchTree& st, const cv::Mat_<double>& queryPoints )
+	{
+		// what we need for K nearest points search ( here K=1 )
+		cv::Mat_<int> nearestIndices( queryPoints.rows, 1 ); // 1D matrix to store the indices of the K-nearest points
+		cv::Mat_<double> nearestDistances( queryPoints.rows, 1 ); // 1D matrix to store the distances to the K-nearest points
+
+		// run the search
+		st.knnSearch(queryPoints,nearestIndices,nearestDistances,1,cvflann::SearchParams(128));
+
+		return nearestDistances;
+
+	}
+
 }
