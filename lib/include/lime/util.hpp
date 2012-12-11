@@ -151,7 +151,7 @@ inline void addSeedsToRGBImage(cimg_library::CImg<int> *rgb, std::vector<BinaryS
 
 inline cimg_library::CImg<unsigned char>* distanceMapToGreyscale(cimg_library::CImg<int> *map)
 {
-	cimg_library::CImg<unsigned char> *res = new cimg_library::CImg<unsigned char>(map->width(),map->height(),1,1, (unsigned char)0);
+	cimg_library::CImg<unsigned char> *res = new cimg_library::CImg<unsigned char>(map->width(),map->height(),1,1, (unsigned char)255);
 
 	int maximum = map->max();
 	int minimum = map->min();
@@ -167,6 +167,42 @@ inline cimg_library::CImg<unsigned char>* distanceMapToGreyscale(cimg_library::C
 		else
 		{
 			(*res)(x,y,0,0) = 128 - (val *128/minimum + 128); 
+		}
+	}
+
+	return res;
+}
+
+inline cimg_library::CImg<unsigned char>* distanceMapToRGB(cimg_library::CImg<int> *map)
+{
+	cimg_library::CImg<unsigned char> *res = new cimg_library::CImg<unsigned char>(map->width(),map->height(),1,3);
+
+	int maximum = map->max();
+	int minimum = map->min();
+
+	cimg_forXY(*map,x,y){
+
+		int val = (*map)(x,y,0,0);
+
+		if (val == 0)
+		{
+			(*res)(x,y,0,0) = 0;
+			(*res)(x,y,0,1) = 0;
+			(*res)(x,y,0,2) = 0;
+			continue;
+		}
+
+		if ( val < 0)
+		{
+			(*res)(x,y,0,0) = ((val * 255)/minimum);
+			(*res)(x,y,0,1) = 255;
+			(*res)(x,y,0,2) = 255 - ((val * 255)/minimum);
+		}
+		else
+		{
+			(*res)(x,y,0,0) = 255;
+			(*res)(x,y,0,1) = ((val * 255)/maximum);
+			(*res)(x,y,0,2) = 255 - ((val * 255)/maximum);
 		}
 	}
 

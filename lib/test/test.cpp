@@ -12,7 +12,7 @@ typedef unsigned char NumType;
 int main(int argc, char** argv)
 {
 	const std::string sourcePath = "IMG_4021.jpg";
-	const std::string destPath = "test.jpg";
+	const std::string destPath = "test.bmp";
 
 	// Basic procedure to use the library
 	ColorimetricHSVAlgorithm1<NumType> algo = ColorimetricHSVAlgorithm1<NumType>();
@@ -36,7 +36,7 @@ int main(int argc, char** argv)
 
 	CImg<int> *distMap = segm.retrieveDistanceMapOfMask(*mask);
 
-	CImg<unsigned char> *resImg = distanceMapToGreyscale(distMap);
+	CImg<unsigned char> *resImg = distanceMapToRGB(distMap);
 
 	/*CImg<int> *resImg = changeBinaryMaskToRGBImage(*testImg);
 

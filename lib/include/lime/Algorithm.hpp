@@ -818,7 +818,7 @@ singleRegionJump:
 
 		unsigned int numb_seeds = seeds.size();
 		unsigned int numb_int = internal.size();
-		unsigned int numb_ext = internal.size();
+		unsigned int numb_ext = external.size();
 
 		cv::Mat_<double> contourPoints(numb_seeds,2);
 		cv::Mat_<double> internalPoints(numb_int,2);
@@ -841,9 +841,10 @@ singleRegionJump:
 		for (unsigned int i = 0; i < external.size();i++)
 		{
 			externalPoints[i][0] = external[i].x;
-			externalPoints[i][1] = external[i].y;
+ 			externalPoints[i][1] = external[i].y;
 		}
 
+		int a = 5;
 		// Initialization of the search tree
 
 		SearchTree st(contourPoints,cvflann::KDTreeIndexParams(5));
