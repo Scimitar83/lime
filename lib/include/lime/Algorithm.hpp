@@ -54,9 +54,13 @@ namespace lime{
 	///
 	typedef double Threshold;
 
+	///
+	/// @typedef SearchTree
+	/// @brief A generic search tree that is used by the OpenCV FLANN algorithm
+	///
 	typedef cv::flann::GenericIndex<cv::flann::L2_Simple<double> > SearchTree;
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS // This template forward declaration produces some problems in combination with doxygen so I disables doxygen for it
+#ifndef DOXYGEN_SHOULD_SKIP_THIS // This template forward declaration produces some problems in combination with doxygen so I disabled doxygen for it
 
 	template<typename U> class Segmentation;
 
@@ -162,7 +166,71 @@ namespace lime{
 		///
 		virtual bool skinThresholds(double c1, double c2, double c3) = 0;
 
+		// Implemented functions
+
+		///
+		/// @brief Indexes and labels all pixels in a picture by comparing it with some of its neighbors.
+		/// @param img The bit mask
+		/// @param x X-coordinate of the current pixel
+		/// @param y Y-coordinate of the current pixel
+		///
+		virtual void pixelLabeling(CImg<bool> *img, int x, int y);
+
+		///
+		/// @brief Used for the region clearing. Deletes all but the biggest skin region in the bit mask.
+		/// @param img The bit mask
+		///
+		virtual void deleteMinorRegions(CImg<bool> *img);
+
+		///
+		/// @brief Uses a bit mask to automatically determine seed points for skin and non-skin pixels
+		/// @param skin True if skin seed pixels should be retrieved, false if non-skin seed pixels should be retrieved 
+		/// @param singleRegion Only determines seed pixels on the border of the first region that is being detected
+		/// @param mask The bit mask
+		/// @param applyRegionChange True if a shrink or grow (based on skin / non-skin) algorithm should be used prior to the seed pixel detection
+		/// @param regionChangeCount Number of times the shrink / grow algorithm should be used
+		/// @param regionChangeSize Size of the kernel for the shrink / grow algorithm
+		///
+		virtual std::vector<BinarySeed>* getSeeds(bool skin, bool singleRegion, const CImg<bool> &mask, bool applyRegionChange, unsigned int regionChangeCount, unsigned int regionChangeSize);
+
+		///
+		/// @brief Produces a map where every pixel has a distance value based on the distance to the contour lines of the skin regions (positive values for outer pixels, negative values for inner pixels).
+		/// @param mask The initial data stored into a binary mask
+		/// @param singleRegion If true only the biggest region will be used (more specifically the contour line of it)
+		///
 		virtual CImg<int>* getDistanceMapOfMask(CImg<bool> &mask, bool singleRegion = false);
+
+		///
+		/// @brief Auxiliary function for "getDistanceMapOfMask" to determine the distances between the queryPoints and the contour points
+		/// @param st The search tree that should have information about the contour points stored into it
+		/// @param queryPoints The points for which the distances should be determined
+		///
+		virtual cv::Mat_<double> findDistances(SearchTree& st, const cv::Mat_<double>& queryPoints);
+
+		///
+		/// @brief Applies a grow and shrink algorithm on the bit mask (grow:shrink = 1:1).
+		/// @param img The bit mask
+		/// @param count Number of times the algorithm should be used
+		/// @param size Size of the algorithm kernel
+		///
+		virtual void growShrinkAlgorithm(CImg<bool> *img, const unsigned int count, const unsigned int size);
+
+
+		///
+		/// @brief Applies a shrink algorithm on the bit mask.
+		/// @param img The bit mask
+		/// @param count Number of times the algorithm should be used
+		/// @param size Size of the algorithm kernel
+		///
+		virtual void shrinkAlgorithm(CImg<bool> *img, const unsigned int count, const unsigned int size);
+
+		///
+		/// @brief Applies a grow algorithm on the bit mask.
+		/// @param img The bit mask
+		/// @param count Number of times the algorithm should be used
+		/// @param size Size of the algorithm kernel
+		///
+		virtual void growAlgorithm(CImg<bool> *img, const unsigned int count, const unsigned int size);
 
 		// Variables
 
@@ -170,6 +238,11 @@ namespace lime{
 		/// @brief Determines if a median filter should be applied before the transformation or not.
 		///
 		bool applyMedian;
+
+		///
+		/// @brief Used for the region clearing. Label of the biggest region in the bit mask.
+		///
+		unsigned int biggestRegion;
 
 		///
 		/// @brief Size (radius) of the median filter kernel
@@ -195,6 +268,25 @@ namespace lime{
 		/// @brief Determines if the region shrink algorithm should be applied to the bit mask.
 		///
 		bool applyShrink;
+
+		///
+		/// @brief Used for the region clearing. An outer vector for each label. An inner vector for the coordinates of each pixel of one label.
+		///
+		std::vector< std::vector <Point2D> > labeledPixels;
+
+		///
+		/// @brief Used for the region clearing. A temporary mask that contains the label of each pixel. 
+		///
+		CImg<unsigned int> labelMask;
+		///
+		/// @brief Used for the region clearing. Keeps track of the number of different regions in the bit mask.
+		///
+		unsigned int regionCount;
+
+		///
+		/// @brief Used for the region clearing. A vector for each label which contains the number of pixels belonging to this label.
+		///
+		std::vector<unsigned int> regionSizes;
 
 		///
 		/// @brief The number of times the shrink algorithm should be applied (only has an effect if applyShrink = true).
@@ -231,85 +323,6 @@ namespace lime{
 		///
 		bool applyRegionClearing;
 
-	private:
-
-		///
-		/// @brief Applies a grow and shrink algorithm on the bit mask (grow:shrink = 1:1).
-		/// @param img The bit mask
-		/// @param count Number of times the algorithm should be used
-		/// @param size Size of the algorithm kernel
-		///
-		virtual void growShrinkAlgorithm(CImg<bool> *img, const unsigned int count, const unsigned int size);
-
-		///
-		/// @brief Applies a grow algorithm on the bit mask.
-		/// @param img The bit mask
-		/// @param count Number of times the algorithm should be used
-		/// @param size Size of the algorithm kernel
-		///
-		virtual void growAlgorithm(CImg<bool> *img, const unsigned int count, const unsigned int size);
-
-		///
-		/// @brief Applies a shrink algorithm on the bit mask.
-		/// @param img The bit mask
-		/// @param count Number of times the algorithm should be used
-		/// @param size Size of the algorithm kernel
-		///
-		virtual void shrinkAlgorithm(CImg<bool> *img, const unsigned int count, const unsigned int size);
-
-		///
-		/// @brief Indexes and labels all pixels in a picture by comparing it with some of its neighbors.
-		/// @param img The bit mask
-		/// @param x X-coordinate of the current pixel
-		/// @param y Y-coordinate of the current pixel
-		///
-		virtual void pixelLabeling(CImg<bool> *img, int x, int y);
-
-		///
-		/// @brief Used for the region clearing. Deletes all but the biggest skin region in the bit mask.
-		/// @param img The bit mask
-		///
-		virtual void deleteMinorRegions(CImg<bool> *img);
-
-		///
-		/// @brief Uses a bit mask to automatically determine seed points for skin and non-skin pixels
-		/// @param skin True if skin seed pixels should be retrieved, false if non-skin seed pixels should be retrieved 
-		/// @singleRegion Only determines seed pixels on the border of the first region that is being detected
-		/// @mask The bit mask
-		/// @applyRegionChange True if a shrink or grow (based on skin / non-skin) algorithm should be used prior to the seed pixel detection
-		/// @regionChangeCount Number of times the shrink / grow algorithm should be used
-		/// @regionChangeSize Size of the kernel for the shrink / grow algorithm
-		///
-		virtual std::vector<BinarySeed>* getSeeds(bool skin, bool singleRegion, const CImg<bool> &mask, bool applyRegionChange, unsigned int regionChangeCount, unsigned int regionChangeSize);
-
-		virtual cv::Mat_<double> findDistances(SearchTree& st, const cv::Mat_<double>& queryPoints);
-
-		// Member
-
-		///
-		/// @brief Used for the region clearing. Keeps track of the number of different regions in the bit mask.
-		///
-		unsigned int regionCount;
-
-		///
-		/// @brief Used for the region clearing. Label of the biggest region in the bit mask.
-		///
-		unsigned int biggestRegion;
-
-		///
-		/// @brief Used for the region clearing. An outer vector for each label. An inner vector for the coordinates of each pixel of one label.
-		///
-		std::vector< std::vector <Point2D> > labeledPixels;
-
-		///
-		/// @brief Used for the region clearing. A vector for each label which contains the number of pixels belonging to this label.
-		///
-		std::vector<unsigned int> regionSizes;
-
-		///
-		/// @brief Used for the region clearing. A temporary mask that contains the label of each pixel. 
-		///
-		CImg<unsigned int> labelMask;
 	};
 
 	template<typename T>
@@ -820,6 +833,7 @@ singleRegionJump:
 		unsigned int numb_int = internal.size();
 		unsigned int numb_ext = external.size();
 
+		// The OpenCV matrices that store the different points as x y
 		cv::Mat_<double> contourPoints(numb_seeds,2);
 		cv::Mat_<double> internalPoints(numb_int,2);
 		cv::Mat_<double> externalPoints(numb_ext,2);
@@ -860,6 +874,7 @@ singleRegionJump:
 
 		for (unsigned int i = 0; i < internal.size();i++)
 		{
+			int tempX = *internalDistances[i];
 			unsigned int x = internal[i].x;
 			unsigned int y = internal[i].y;
 

@@ -177,8 +177,8 @@ inline cimg_library::CImg<unsigned char>* distanceMapToRGB(cimg_library::CImg<in
 {
 	cimg_library::CImg<unsigned char> *res = new cimg_library::CImg<unsigned char>(map->width(),map->height(),1,3);
 
-	int maximum = map->max();
-	int minimum = map->min();
+	int maximum = std::log((double)std::abs(map->max()))/std::log(2.0);
+	int minimum = std::log((double)std::abs(map->min()))/std::log(2.0);
 
 	cimg_forXY(*map,x,y){
 
@@ -194,14 +194,18 @@ inline cimg_library::CImg<unsigned char>* distanceMapToRGB(cimg_library::CImg<in
 
 		if ( val < 0)
 		{
-			(*res)(x,y,0,0) = ((val * 255)/minimum);
+			val = std::log((double)std::abs(val))/std::log(2.0);
+
+			(*res)(x,y,0,0) = 255 - ((val * 255)/minimum);
 			(*res)(x,y,0,1) = 255;
 			(*res)(x,y,0,2) = 255 - ((val * 255)/minimum);
 		}
 		else
 		{
+			val = std::log((double)std::abs(val))/std::log(2.0);
+
 			(*res)(x,y,0,0) = 255;
-			(*res)(x,y,0,1) = ((val * 255)/maximum);
+			(*res)(x,y,0,1) = 255 - ((val * 255)/maximum);
 			(*res)(x,y,0,2) = 255 - ((val * 255)/maximum);
 		}
 	}

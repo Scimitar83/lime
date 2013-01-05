@@ -11,11 +11,11 @@ typedef unsigned char NumType;
 
 int main(int argc, char** argv)
 {
-	const std::string sourcePath = "IMG_4021.jpg";
+	const std::string sourcePath = "IMG_0267.jpg";
 	const std::string destPath = "test.bmp";
 
 	// Basic procedure to use the library
-	ColorimetricHSVAlgorithm1<NumType> algo = ColorimetricHSVAlgorithm1<NumType>();
+	ColorimetricYCbCrAlgorithm1<NumType> algo = ColorimetricYCbCrAlgorithm1<NumType>();
 
 	// Algorithm configuration
 	algo.ApplyMedian(true);
@@ -38,9 +38,9 @@ int main(int argc, char** argv)
 
 	CImg<unsigned char> *resImg = distanceMapToRGB(distMap);
 
-	/*CImg<int> *resImg = changeBinaryMaskToRGBImage(*testImg);
+	//CImg<int> *resImg = changeBinaryMaskToRGBImage(*mask);
 
-	std::vector<BinarySeed> *skinSeeds = segm.retrieveSkinSeedsOfMask(*testImg, true, true, 30, 5);
+	/*std::vector<BinarySeed> *skinSeeds = segm.retrieveSkinSeedsOfMask(*testImg, true, true, 30, 5);
 	std::vector<BinarySeed> *nonSkinSeeds = segm.retrieveNonSkinSeedsOfMask(*testImg, true, true, 30, 5);
 
 	addSeedsToRGBImage(resImg,skinSeeds,nonSkinSeeds);*/
